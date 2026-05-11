@@ -890,43 +890,20 @@ async function salvarSigRemota(){
 function renderListagem(){
   const t=$('tabelaReq');
   if(!t) return;
+
   if(!DB.requisicoes.length){
     t.innerHTML='';
     const tw=t.closest('.table-wrap');
-    if(tw)tw.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Nenhuma requisição.</p></div>';
+    if(tw) tw.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Nenhuma requisição.</p></div>';
     return;
   }
+
   // Remove old cards if any
   const oldCards=$('reqCards');
   if(oldCards) oldCards.remove();
-  t.innerHTML=`<thead><tr><th>Nº</th><th>Data</th><th>Igreja</th><th>Categoria</th><th>Solicitante</th><th>Total</th><th>✍️</th><th>Ações</th></tr></thead><tbody>`+
-  // Desktop table
-  DB.requisicoes.slice().reverse().map((r,idx)=>{
-    const ri=DB.requisicoes.length-1-idx;
-    const tot=(r.itens||[]).reduce((s,it)=>s+it.qtd*it.custo,0);
-    const sigs=[r.sigMin?'✅':'⬜',r.sigTec?'✅':'⬜',r.sigMan?'✅':'⬜'].join('');
-    return `<tr>
-      <td><span class="badge-num">${fmtNum(r.num)}</span></td>
-      <td style="white-space:nowrap;">${fmtData(r.data)}</td>
-      <td>${r.igreja||'—'}</td>
-      <td><span class="badge badge-navy">${r.categoria||'—'}</span></td>
-      <td>${r.solicitante||'—'}</td>
-      <td style="font-weight:600;color:var(--navy);white-space:nowrap;">${fmtM(tot)}</td>
-      <td style="font-size:.8rem;letter-spacing:1px;">${sigs}</td>
-      <td><div class="td-act">
-        <button class="btn btn-sm btn-icon" onclick="abrirPreview(DB.requisicoes[${ri}])" title="Ver">👁</button>
-        <button class="btn btn-sm btn-icon" onclick="imprimirDireto(DB.requisicoes[${ri}])" title="Imprimir">🖨️</button>
-        <button class="btn btn-sm btn-icon" onclick="exportarPDF(DB.requisicoes[${ri}])" title="PDF">📄</button>
-        <button class="btn btn-sm btn-icon" onclick="abrirSigRemota(${ri})" title="Assinar">✍️</button>
-        <button class="btn-wa" onclick="enviarWA(DB.requisicoes[${ri}])" title="WhatsApp">${WA_SVG}</button>
-        <button class="btn btn-del btn-sm" onclick="excluirReq(${ri})" title="Excluir">🗑</button>
-      </div></td>
-    </tr>`;
-  }).join('')+`</tbody>`;
-}
-  // Generate mobile cards
-  const isMobile = window.innerWidth < 640;
-  if(isMobile){
+
+  // Mobile: show cards
+  if(window.innerWidth < 640){
     const tw=t.closest('.table-wrap');
     if(tw){
       let cards='<div id="reqCards" class="req-cards">';
@@ -947,11 +924,11 @@ function renderListagem(){
           </div>
           <div class="req-card-val">${fmtM(tot)}</div>
           <div class="req-card-actions">
-            <button class="btn btn-sm" onclick="imprimirDireto(DB.requisicoes[${ri}])" title="Imprimir">🖨️ Imprimir</button>
-            <button class="btn btn-sm" onclick="exportarPDF(DB.requisicoes[${ri}])" title="PDF">📄 PDF</button>
-            <button class="btn btn-sm" onclick="abrirSigRemota(${ri})" title="Assinar">✍️ Assinar</button>
-            <button class="btn-wa" onclick="enviarWA(DB.requisicoes[${ri}])" title="WhatsApp">${WA_SVG}</button>
-            <button class="btn btn-del btn-sm" onclick="excluirReq(${ri})">🗑</button>
+            <button class="btn btn-sm" onclick="imprimirDireto(DB.requisicoes[${ri}])">🖨️ Imprimir</button>
+            <button class="btn btn-sm" onclick="exportarPDF(DB.requisicoes[${ri}])">📄 PDF</button>
+            <button class="btn btn-sm" onclick="abrirSigRemota(${ri})">✍️ Assinar</button>
+            <button class="btn-wa" onclick="enviarWA(DB.requisicoes[${ri}])">${WA_SVG}</button>
+            <button class="btn btn-del btn-sm" onclick="excluirReq(${ri})" style="grid-column:span 2;">🗑 Excluir</button>
           </div>
         </div>`;
       });
@@ -960,6 +937,36 @@ function renderListagem(){
       return;
     }
   }
+
+  // Desktop: show table
+  let rows='';
+  DB.requisicoes.slice().reverse().forEach((r,idx)=>{
+    const ri=DB.requisicoes.length-1-idx;
+    const tot=(r.itens||[]).reduce((s,it)=>s+it.qtd*it.custo,0);
+    const sigs=[r.sigMin?'✅':'⬜',r.sigTec?'✅':'⬜',r.sigMan?'✅':'⬜'].join('');
+    rows+=`<tr>
+      <td><span class="badge-num">${fmtNum(r.num)}</span></td>
+      <td style="white-space:nowrap">${fmtData(r.data)}</td>
+      <td>${r.igreja||'—'}</td>
+      <td><span class="badge badge-navy">${r.categoria||'—'}</span></td>
+      <td>${r.solicitante||'—'}</td>
+      <td style="font-weight:600;color:var(--navy);white-space:nowrap">${fmtM(tot)}</td>
+      <td style="font-size:.8rem;letter-spacing:1px">${sigs}</td>
+      <td><div class="td-act">
+        <button class="btn btn-sm btn-icon" onclick="abrirPreview(DB.requisicoes[${ri}])">👁</button>
+        <button class="btn btn-sm btn-icon" onclick="imprimirDireto(DB.requisicoes[${ri}])">🖨️</button>
+        <button class="btn btn-sm btn-icon" onclick="exportarPDF(DB.requisicoes[${ri}])">📄</button>
+        <button class="btn btn-sm btn-icon" onclick="abrirSigRemota(${ri})">✍️</button>
+        <button class="btn-wa" onclick="enviarWA(DB.requisicoes[${ri}])">${WA_SVG}</button>
+        <button class="btn btn-del btn-sm" onclick="excluirReq(${ri})">🗑</button>
+      </div></td>
+    </tr>`;
+  });
+  t.innerHTML=`<thead><tr>
+    <th>Nº</th><th>Data</th><th>Igreja</th><th>Categoria</th>
+    <th>Solicitante</th><th>Total</th><th>✍️</th><th>Ações</th>
+  </tr></thead><tbody>${rows}</tbody>`;
+}
 
 async function excluirReq(idx){
   if(!confirm(`Excluir Req. ${fmtNum(DB.requisicoes[idx].num)}?`))return;
