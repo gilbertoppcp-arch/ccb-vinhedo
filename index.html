@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Requisição de Compras – CCB Adm Vinhedo</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -26,8 +26,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 /* Header */
 .header{background:var(--navy);border-radius:12px 12px 0 0;padding:14px 16px;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;}
 .header::after{content:'';position:absolute;right:-30px;top:-50px;width:150px;height:150px;border-radius:50%;background:rgba(181,144,58,.08);pointer-events:none;}
-.logo-badge{flex-shrink:0;width:48px;height:48px;border-radius:10px;border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;}
-.logo-badge span{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;letter-spacing:2px;color:transparent;-webkit-text-stroke:1.3px rgba(255,255,255,.92);}
+.logo-badge{flex-shrink:0;width:52px;height:52px;border-radius:10px;border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;background:transparent;}
+.logo-badge span{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:700;letter-spacing:3px;color:var(--navy);-webkit-text-stroke:0;}
 .header-text{flex:1;min-width:0;}
 .header-text h1{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:#fff;line-height:1.2;}
 .header-text p{font-size:.67rem;color:rgba(255,255,255,.5);margin-top:1px;}
@@ -230,13 +230,37 @@ tbody tr:hover{background:var(--cream);}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--navy);color:#fff;padding:11px 20px;border-radius:24px;font-size:.8rem;font-weight:600;z-index:9998;transition:transform .3s,opacity .3s;opacity:0;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center;}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 
+/* ── Login screen ── */
+.login-screen{position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-card{background:#fff;border-radius:16px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 24px 60px rgba(0,0,0,.35);}
+.login-logo{width:64px;height:64px;border-radius:14px;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;background:transparent;}
+.login-logo span{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:700;letter-spacing:3px;color:var(--navy);-webkit-text-stroke:0;}
+.login-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);text-align:center;margin-bottom:4px;}
+.login-sub{font-size:.78rem;color:var(--text-muted);text-align:center;margin-bottom:24px;}
+.login-card .field{margin-bottom:14px;}
+.login-card .field label{display:block;margin-bottom:5px;}
+.login-card .field input{font-size:1rem;}
+.login-err{color:var(--danger);font-size:.78rem;margin-bottom:10px;display:none;text-align:center;}
+.login-btn{width:100%;padding:12px;font-size:.95rem;}
+
+/* ── Usuarios panel ── */
+.usuarios-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:16px;}
+.usuario-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.usuario-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.usuario-nome{font-weight:600;color:var(--navy);font-size:.9rem;}
+.usuario-role{font-size:.68rem;padding:2px 8px;border-radius:10px;font-weight:600;}
+.role-admin{background:rgba(181,144,58,.15);color:var(--gold);}
+.role-user{background:rgba(26,46,74,.1);color:var(--navy);}
+.usuario-login{font-size:.78rem;color:var(--text-muted);margin-bottom:10px;}
+
+/* Desktop */
 /* Desktop */
 @media(min-width:640px){
   .page-wrap{padding:20px 16px 60px;}
   .header{padding:20px 28px;}
   .header-text h1{font-size:1.15rem;}
   .logo-badge{width:58px;height:58px;}
-  .logo-badge span{font-size:1.3rem;}
+  .logo-badge span{font-size:1.4rem;letter-spacing:3px;}
   .panel{padding:24px 26px;}
   .form-grid{grid-template-columns:repeat(4,1fr);}
   .sig-grid{flex-direction:row;}
@@ -260,7 +284,21 @@ tbody tr:hover{background:var(--cream);}
 <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p id="loadingMsg">Conectando...</p></div>
 <div class="toast" id="toast"></div>
 
-<div class="page-wrap">
+<!-- TELA DE LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo"><span>CCB</span></div>
+    <h2 class="login-title">Congregação Cristã no Brasil</h2>
+    <p class="login-sub">Requisição de Compras · Adm Vinhedo</p>
+    <div class="field"><label>Usuário</label><input type="text" id="loginUser" placeholder="Digite seu usuário" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()"></div>
+    <div class="field"><label>Senha</label><input type="password" id="loginPass" placeholder="Digite sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+    <p class="login-err" id="loginErrMsg">Usuário ou senha incorretos.</p>
+    <button class="btn login-btn" onclick="fazerLogin()">Entrar</button>
+  </div>
+</div>
+
+<div class="page-wrap" id="appWrap" style="display:none;">
+
 
 <!-- HEADER -->
 <div class="header">
@@ -290,6 +328,7 @@ tbody tr:hover{background:var(--cream);}
   <button class="nav-btn" onclick="showPanel('itens',this)">📦 Itens</button>
   <button class="nav-btn" onclick="showPanel('lista',this)">📋 Listagem</button>
   <button class="nav-btn" onclick="showPanel('dashboard',this)">📊 Dashboard</button>
+  <button class="nav-btn" id="navUsuarios" style="display:none;" onclick="showPanel('usuarios',this)">👥 Usuários</button>
 </nav>
 
 <!-- NOVA REQUISIÇÃO -->
@@ -302,7 +341,7 @@ tbody tr:hover{background:var(--cream);}
         <span id="numReqDisplay" style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:700;">—</span>
       </div>
       <button class="btn btn-sm" type="submit" form="formReq">💾 Salvar</button>
-      <button class="btn btn-sm" id="adminBtn" onclick="abrirLogin()">🔒 Admin</button>
+      <button class="btn btn-sm" id="adminBtn" onclick="abrirMenuAdmin()">👤</button>
       <button class="btn btn-sm" onclick="imprimirDireto()">🖨️</button>
     </div>
   </div>
@@ -365,8 +404,16 @@ tbody tr:hover{background:var(--cream);}
 
 <!-- DASHBOARD -->
 <div id="panel-dashboard" class="panel"><p class="section-title">Dashboard</p><div id="dashContent"></div></div>
+
+<!-- USUARIOS (só Admin) -->
+<div id="panel-usuarios" class="panel">
+  <p class="section-title">Gerenciar Usuários</p>
+  <div id="usuarios-content"></div>
 </div>
 </div>
+</div>
+
+</div><!-- /appWrap -->
 
 <!-- MODAIS -->
 <div class="modal-overlay" id="modalPreview" onclick="closeSeFora(event,'modalPreview')">
@@ -428,12 +475,17 @@ const FB_BASE = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/data
 /* ══════════════════════════════════════
    STATE
 ══════════════════════════════════════ */
-const ADMIN_SENHA = 'ccb2025';
+// Usuário logado atualmente
+let usuarioLogado = null; // {nome, login, role: 'admin'|'user'}
+
+// Usuário admin padrão (sempre existe)
+const ADMIN_PADRAO = {nome:'Administrador', login:'admin', senha:'ccb2025', role:'admin'};
+
 const SIG_KEYS = ['min','tec','man'];
 const WA_SVG=`<svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.532 5.859L.057 23.57a.75.75 0 0 0 .92.921l5.753-1.476A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.713 9.713 0 0 1-4.953-1.355l-.355-.211-3.668.941.963-3.595-.232-.372A9.712 9.712 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>`;
 
 let DB={requisicoes:[],solicitantes:[],itensCadastrados:[],reqCounter:0};
-let adminLogado=false, sigEmpty={min:true,tec:true,man:true};
+let sigEmpty={min:true,tec:true,man:true};
 let importBuf=[], remoteSigIdx=null, remoteEmpty=true;
 let editSolIdx=null, editItemIdx=null;
 
@@ -537,6 +589,7 @@ function reRenderAtivo(){
     if(id==='dashboard') renderDashboard();
     if(id==='solicitantes') renderSol();
     if(id==='itens') renderItens();
+    if(id==='usuarios') renderUsuarios();
   }catch(e){console.warn('reRenderAtivo:',e);}
 }
 
@@ -544,18 +597,65 @@ function reRenderAtivo(){
    LOGIN
 ══════════════════════════════════════ */
 function abrirLogin(){
-  if(adminLogado){adminLogado=false;$set('adminBtn','textContent','🔒 Admin');toast('🔒 Sessão encerrada.');return;}
-  document.getElementById('loginPwd').value='';
-  document.getElementById('loginErr').style.display='none';
-  openModal('modalLogin');
-  setTimeout(()=>document.getElementById('loginPwd').focus(),300);
+  // Botão Admin agora é só logout
+  if(usuarioLogado&&usuarioLogado.role==='admin'){
+    // já está como admin — não faz nada, logout é pelo botão sair
+  }
 }
-function confirmarLogin(){
-  const pwd=$('loginPwd');if(!pwd)return;
-  if(pwd.value===ADMIN_SENHA){
-    adminLogado=true;$set('adminBtn','textContent','🔓 Admin');
-    closeModal('modalLogin');toast('✅ Admin logado!');renderSol();renderItens();
-  }else{const e=$('loginErr');if(e)e.style.display='block';}
+function confirmarLogin(){ /* substituído por fazerLogin() */ }
+
+/* ══════════════════════════════════════
+   AUTH — Login / Logout / Usuários
+══════════════════════════════════════ */
+
+function fazerLogin(){
+  const loginVal = ($('loginUser')||{value:''}).value.trim().toLowerCase();
+  const senhaVal = ($('loginPass')||{value:''}).value;
+  if(!loginVal||!senhaVal){ $set('loginErrMsg','style','display:block'); return; }
+
+  // Checar admin padrão
+  let encontrado = null;
+  if(loginVal===ADMIN_PADRAO.login && senhaVal===ADMIN_PADRAO.senha){
+    encontrado = ADMIN_PADRAO;
+  } else {
+    // Checar usuários cadastrados no DB
+    encontrado = (DB.usuarios||[]).find(u=>u.login.toLowerCase()===loginVal && u.senha===senhaVal);
+  }
+
+  if(!encontrado){
+    const el=$('loginErrMsg'); if(el)el.style.display='block';
+    return;
+  }
+
+  usuarioLogado = encontrado;
+  $set('loginErrMsg','style','display:none');
+  // Esconder tela de login, mostrar app
+  const ls=$('loginScreen'); if(ls)ls.style.display='none';
+  const aw=$('appWrap'); if(aw)aw.style.display='block';
+  // Mostrar aba usuários só para admin
+  const nu=$('navUsuarios'); if(nu)nu.style.display=usuarioLogado.role==='admin'?'flex':'none';
+  // Atualizar botão admin
+  $set('adminBtn','textContent', usuarioLogado.role==='admin'?'🔓 Admin':'👤 '+usuarioLogado.nome.split(' ')[0]);
+  toast('✅ Bem-vindo, '+usuarioLogado.nome+'!');
+  inicializarUI();
+  carregarDados();
+  // Auto-refresh a cada 5 min
+  if(!window._refreshInterval){
+    window._refreshInterval=setInterval(()=>carregarDados(),300000);
+  }
+}
+
+function fazerLogout(){
+  usuarioLogado=null;
+  const ls=$('loginScreen'); if(ls){ls.style.display='flex'; $set('loginPass','value','');}
+  const aw=$('appWrap'); if(aw)aw.style.display='none';
+  toast('👋 Até logo!');
+}
+
+// Admin btn agora mostra menu de logout
+function abrirMenuAdmin(){
+  if(!usuarioLogado) return;
+  if(confirm('Deseja sair do sistema?')) fazerLogout();
 }
 
 /* ══════════════════════════════════════
@@ -570,6 +670,7 @@ function showPanel(p,btn){
   if(p==='itens')renderItens();
   if(p==='lista')renderListagem();
   if(p==='dashboard')renderDashboard();
+  if(p==='usuarios')renderUsuarios();
   if(p==='nova'){preencherDropdowns();updNum();setTimeout(initCanvases,80);}
 }
 
@@ -610,7 +711,7 @@ function getSig(key){return sigEmpty[key]?null:document.getElementById('canvas-'
 ══════════════════════════════════════ */
 function renderSol(){
   const div=document.getElementById('sol-content');
-  if(!adminLogado){div.innerHTML=`<div class="restricted"><div class="ri">🔒</div><p>Faça login como Admin.</p></div>`;return;}
+  // Todos os usuários logados podem cadastrar solicitantes
   let h=`<div class="cad-row"><div class="field"><label>Nome</label><input type="text" id="novoSol" placeholder="Ex: João da Silva" onkeydown="if(event.key==='Enter')addSol()"></div><button class="btn" onclick="addSol()">Salvar</button></div>`;
   if(!DB.solicitantes.length)h+=`<div class="empty-state"><div class="icon">👤</div><p>Nenhum cadastrado.</p></div>`;
   else h+=`<div class="table-wrap"><table style="min-width:280px;"><thead><tr><th>#</th><th>Nome</th><th>Ações</th></tr></thead><tbody>`+DB.solicitantes.map((s,i)=>`<tr><td><span class="badge badge-navy">${i+1}</span></td><td>${s}</td><td class="td-act"><button class="btn btn-sm" onclick="editSol(${i})">✏️</button><button class="btn btn-del btn-sm" onclick="delSol(${i})">🗑</button></td></tr>`).join('')+`</tbody></table></div>`;
@@ -631,7 +732,7 @@ async function delSol(i){if(!confirm('Excluir?'))return;DB.solicitantes.splice(i
 ══════════════════════════════════════ */
 function renderItens(){
   const div=document.getElementById('itens-content');
-  if(!adminLogado){div.innerHTML=`<div class="restricted"><div class="ri">🔒</div><p>Faça login como Admin.</p></div>`;return;}
+  // Todos os usuários logados podem cadastrar solicitantes
   let h=`<div class="cad-row"><div class="field"><label>Nome</label><input type="text" id="novoItem" placeholder="Ex: Cimento CP-II" onkeydown="if(event.key==='Enter')addItemCad()"></div><div class="field" style="max-width:120px;"><label>Unidade</label><input type="text" id="novaUnd" placeholder="sc, m²"></div><button class="btn" onclick="addItemCad()">Salvar</button><button class="btn" onclick="openModal('modalImport')" title="Importar">📥</button></div>`;
   if(!DB.itensCadastrados.length)h+=`<div class="empty-state"><div class="icon">📦</div><p>Nenhum item.</p></div>`;
   else h+=`<div class="table-wrap"><table style="min-width:280px;"><thead><tr><th>#</th><th>Item</th><th>Unid.</th><th>Ações</th></tr></thead><tbody>`+DB.itensCadastrados.map((s,i)=>`<tr><td><span class="badge badge-navy">${i+1}</span></td><td>${s.nome}</td><td>${s.unidade||'—'}</td><td class="td-act"><button class="btn btn-sm" onclick="editItem(${i})">✏️</button><button class="btn btn-del btn-sm" onclick="delItem(${i})">🗑</button></td></tr>`).join('')+`</tbody></table></div>`;
@@ -827,17 +928,30 @@ function textoWA(d){
   const sol=d.solicitante||'o solicitante';
   const link=SITE_URL||window.location.href;
   const msg=[
-    'Requisição de Compras – CCB Adm Vinhedo',
+    '*Requisição de Compras – CCB Adm Vinhedo*',
     '📅 Data: '+fmtData(d.data),
     '⛪ Igreja: '+(d.igreja||'—'),
     '👤 Solicitante: '+sol,
+    '',
+    '📎 _O PDF da requisição foi anexado nesta conversa._',
     '',
     '👇 Clique no link para visualizar e assinar:',
     link
   ].join('%0A');
   return msg;
 }
-function enviarWA(d){window.open('https://wa.me/?text='+textoWA(d),'_blank');}
+function enviarWA(d){
+  // 1. Gera e baixa o PDF automaticamente
+  exportarPDF(d);
+  // 2. Pequena pausa e abre o WhatsApp
+  setTimeout(()=>{
+    window.open('https://wa.me/?text='+textoWA(d),'_blank');
+  }, 800);
+  // 3. Avisa o usuário para anexar o PDF
+  setTimeout(()=>{
+    toast('📎 PDF baixado! Anexe-o na conversa do WhatsApp.',5000);
+  }, 1200);
+}
 
 /* ══════════════════════════════════════
    ASSINATURA REMOTA
@@ -969,9 +1083,90 @@ function renderListagem(){
 }
 
 async function excluirReq(idx){
+  if(!usuarioLogado||usuarioLogado.role!=='admin'){toast('⚠️ Apenas admins podem excluir.');return;}
   if(!confirm(`Excluir Req. ${fmtNum(DB.requisicoes[idx].num)}?`))return;
   DB.requisicoes.splice(idx,1);loading(true,'Excluindo...');await salvarNuvem();loading(false);
   renderListagem();toast('🗑 Excluída.');
+}
+
+/* ══════════════════════════════════════
+   USUÁRIOS
+══════════════════════════════════════ */
+function renderUsuarios(){
+  const div=$('usuarios-content'); if(!div)return;
+  if(!usuarioLogado||usuarioLogado.role!=='admin'){
+    div.innerHTML='<div class="restricted"><div class="ri">🔒</div><p>Apenas administradores.</p></div>';
+    return;
+  }
+  const todos=[ADMIN_PADRAO,...(DB.usuarios||[])];
+  let html=`<div class="cad-row">
+    <div class="field"><label>Nome completo</label><input type="text" id="novoUNome" placeholder="Ex: João da Silva"></div>
+    <div class="field"><label>Usuário (login)</label><input type="text" id="novoULogin" placeholder="Ex: joao.silva"></div>
+    <div class="field"><label>Senha</label><input type="password" id="novoUSenha" placeholder="Mínimo 4 caracteres"></div>
+    <div class="field" style="max-width:140px;"><label>Perfil</label>
+      <select id="novoURole">
+        <option value="user">Usuário</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <button class="btn" onclick="addUsuario()">Salvar</button>
+  </div>`;
+  html+=`<div class="usuarios-grid">`;
+  todos.forEach((u,i)=>{
+    const isPadrao=u.login==='admin'&&!u.id;
+    html+=`<div class="usuario-card">
+      <div class="usuario-card-top">
+        <span class="usuario-nome">${u.nome}</span>
+        <span class="usuario-role ${u.role==='admin'?'role-admin':'role-user'}">${u.role==='admin'?'Admin':'Usuário'}</span>
+      </div>
+      <div class="usuario-login">👤 ${u.login}</div>
+      ${isPadrao
+        ? '<span style="font-size:.72rem;color:var(--text-muted);">Usuário padrão do sistema</span>'
+        : `<div style="display:flex;gap:6px;">
+            <button class="btn btn-sm" onclick="editarUsuario('${u.id}')">✏️ Editar</button>
+            <button class="btn btn-del btn-sm" onclick="excluirUsuario('${u.id}')">🗑 Excluir</button>
+           </div>`
+      }
+    </div>`;
+  });
+  html+=`</div>`;
+  div.innerHTML=html;
+}
+
+async function addUsuario(){
+  const nome=$('novoUNome').value.trim();
+  const login=$('novoULogin').value.trim().toLowerCase();
+  const senha=$('novoUSenha').value;
+  const role=$('novoURole').value;
+  if(!nome||!login||!senha){toast('⚠️ Preencha todos os campos.');return;}
+  if(senha.length<4){toast('⚠️ Senha mínimo 4 caracteres.');return;}
+  if(!DB.usuarios) DB.usuarios=[];
+  const existe=DB.usuarios.find(u=>u.login===login)||(login==='admin');
+  if(existe){toast('⚠️ Este login já existe.');return;}
+  DB.usuarios.push({id:Date.now().toString(),nome,login,senha,role});
+  loading(true,'Salvando...');await salvarNuvem();loading(false);
+  $set('novoUNome','value','');$set('novoULogin','value','');$set('novoUSenha','value','');
+  renderUsuarios();toast('✅ Usuário criado!');
+}
+
+function editarUsuario(id){
+  const u=(DB.usuarios||[]).find(x=>x.id===id); if(!u)return;
+  const novaSenha=prompt(`Nova senha para "${u.nome}" (deixe em branco para manter):`);
+  if(novaSenha===null)return;
+  const novoNome=prompt('Nome completo:',u.nome);
+  if(!novoNome)return;
+  if(novaSenha&&novaSenha.length<4){toast('⚠️ Senha mínimo 4 caracteres.');return;}
+  u.nome=novoNome.trim();
+  if(novaSenha) u.senha=novaSenha;
+  salvarNuvem().then(()=>{renderUsuarios();toast('✅ Usuário atualizado!');});
+}
+
+async function excluirUsuario(id){
+  const u=(DB.usuarios||[]).find(x=>x.id===id); if(!u)return;
+  if(!confirm(`Excluir usuário "${u.nome}"?`))return;
+  DB.usuarios=DB.usuarios.filter(x=>x.id!==id);
+  loading(true,'Salvando...');await salvarNuvem();loading(false);
+  renderUsuarios();toast('🗑 Usuário excluído.');
 }
 
 /* ══════════════════════════════════════
@@ -1021,16 +1216,15 @@ function inicializarUI(){
     if(dr) dr.value=new Date().toISOString().split('T')[0];
   }catch(e){console.warn('inicializarUI:',e);}
 }
-window.addEventListener('load',async()=>{
-  // Mostrar UI imediatamente com dados locais se houver
+window.addEventListener('load',()=>{
+  // Mostrar tela de login — carregar dados só após login
+  const ls=$('loginScreen'); if(ls)ls.style.display='flex';
+  const aw=$('appWrap'); if(aw)aw.style.display='none';
+  // Carregar dados locais em background para ter disponível no login
   const saved=localStorage.getItem('ccb_fallback');
-  if(saved){
-    try{DB=JSON.parse(saved);}catch(e){}
-  }
-  inicializarUI();
-  // Depois buscar dados frescos na nuvem
-  await carregarDados();
-  setInterval(()=>carregarDados(),300000);
+  if(saved){try{DB=JSON.parse(saved);}catch(e){}}
+  // Focus no campo usuário
+  setTimeout(()=>{ const el=$('loginUser');if(el)el.focus(); },200);
 });
 </script>
 </body>
