@@ -459,7 +459,7 @@ function updNum(){const n=fmtNum(DB.reqCounter+1);$set('headerNextNum','textCont
    único campo — simples e confiável
 ══════════════════════════════════════ */
 
-const FS_URL=`${FB_BASE}/ccb?key=${FB_API_KEY}`;
+const FS_URL=`${FB_BASE}/dados/ccb?key=${FB_API_KEY}`;
 
 async function carregarDados(showToast=false){
   loading(true,'Buscando dados...');
