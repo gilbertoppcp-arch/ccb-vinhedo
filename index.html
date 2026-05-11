@@ -925,7 +925,7 @@ function renderListagem(){
           <div class="req-card-val">${fmtM(tot)}</div>
           <div class="req-card-actions">
             <button class="btn btn-sm" onclick="imprimirDireto(DB.requisicoes[${ri}])">🖨️ Imprimir</button>
-            <button class="btn btn-sm" onclick="exportarPDF(DB.requisicoes[${ri}])">📄 PDF</button>
+            <button class="btn btn-sm" onclick="abrirPreview(DB.requisicoes[${ri}])">👁 Visualizar</button>
             <button class="btn btn-sm" onclick="abrirSigRemota(${ri})">✍️ Assinar</button>
             <button class="btn-wa" onclick="enviarWA(DB.requisicoes[${ri}])">${WA_SVG}</button>
             <button class="btn btn-del btn-sm" onclick="excluirReq(${ri})" style="grid-column:span 2;">🗑 Excluir</button>
