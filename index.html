@@ -922,9 +922,9 @@ function coletarDados(num){
     itens.push({desc:r.querySelector('.desc').value,und:r.querySelector('.und').value,qtd:q,custo:c});
   });
   return{num:num||null,data:document.getElementById('dataReq').value,igreja:document.getElementById('igreja').value,categoria:document.getElementById('categoria').value,solicitante:document.getElementById('solicitante').value,itens,totalG,
-    sigMin:getSig('min'),nomeMin:document.getElementById('nome-min').value,
-    sigTec:getSig('tec'),nomeTec:document.getElementById('nome-tec').value,
-    sigMan:getSig('man'),nomeMan:document.getElementById('nome-man').value};
+    sigMin:null,nomeMin:'',
+    sigTec:null,nomeTec:'',
+    sigMan:null,nomeMan:''};
 }
 
 /* ══════════════════════════════════════
@@ -940,7 +940,7 @@ document.getElementById('formReq').addEventListener('submit',async function(e){
   this.reset();
   const ic=$('itensContainer');if(ic)ic.innerHTML='';
   $set('totalGeral','innerText','R$ 0,00');
-  SIG_KEYS.forEach(k=>limparSig(k));atualizarEmpty();updNum();preencherNomes();
+  atualizarEmpty();updNum();
   const dr=$('dataReq');if(dr)dr.value=new Date().toISOString().split('T')[0];
 });
 
