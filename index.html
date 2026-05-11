@@ -1017,18 +1017,18 @@ function exportarPDF(d){
 function textoWA(d){
   const sol=d.solicitante||'o solicitante';
   const link=SITE_URL||window.location.href;
-  const msg=[
-    '*Requisição de Compras – CCB Adm Vinhedo*',
-    '📅 Data: '+fmtData(d.data),
-    '⛪ Igreja: '+(d.igreja||'—'),
-    '👤 Solicitante: '+sol,
+  const linhas=[
+    '*Requisicao de Compras - CCB Adm Vinhedo*',
+    'Data: '+fmtData(d.data),
+    'Igreja: '+(d.igreja||'-'),
+    'Solicitante: '+sol,
     '',
-    '📎 _O PDF da requisição foi anexado nesta conversa._',
+    '_O PDF da requisicao foi anexado nesta conversa._',
     '',
-    '👇 Clique no link para visualizar e assinar:',
+    'Clique no link para visualizar e assinar:',
     link
-  ].join('%0A');
-  return msg;
+  ];
+  return encodeURIComponent(linhas.join('\n'));
 }
 function enviarWA(d){
   // 1. Gera e baixa o PDF automaticamente
