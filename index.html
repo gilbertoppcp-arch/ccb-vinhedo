@@ -450,10 +450,14 @@ let editSolIdx=null, editItemIdx=null;
 const fmtNum  =n=>n?String(n).padStart(4,'0'):'—';
 const fmtM    =v=>'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
 const fmtData =v=>{if(!v)return'—';const[y,m,d]=v.split('-');return`${d}/${m}/${y}`;};
-const loading =(on,msg='Aguarde...')=>{document.getElementById('loadingOverlay').classList[on?'add':'remove']('on');if(msg)document.getElementById('loadingMsg').textContent=msg;};
-function toast(msg,dur=3200){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
-function setSS(ok,msg){document.getElementById('syncDot').className='sync-dot'+(ok?'':' off');document.getElementById('syncTxt').textContent=ok?'online':'offline';document.getElementById('syncMsg').textContent=msg;}
-function updNum(){const n=fmtNum(DB.reqCounter+1);document.getElementById('headerNextNum').textContent=n;document.getElementById('numReqDisplay').textContent=n;document.getElementById('reqPill').style.display='block';}
+// Safe DOM helper — never throws if element not found
+const $=id=>document.getElementById(id);
+const $set=(id,prop,val)=>{const el=$(id);if(el)el[prop]=val;};
+const $cls=(id,fn)=>{const el=$(id);if(el)el.classList[fn[0]](...fn.slice(1));};
+const loading=(on,msg='Aguarde...')=>{const el=$('loadingOverlay');if(el)el.classList[on?'add':'remove']('on');$set('loadingMsg','textContent',msg||'');};
+function toast(msg,dur=3200){const t=$('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function setSS(ok,msg){$set('syncDot','className','sync-dot'+(ok?'':' off'));$set('syncTxt','textContent',ok?'online':'offline');$set('syncMsg','textContent',msg||'');}
+function updNum(){const n=fmtNum(DB.reqCounter+1);$set('headerNextNum','textContent',n);$set('numReqDisplay','textContent',n);const p=$('reqPill');if(p)p.style.display='block';}
 
 /* ══════════════════════════════════════
    JSONBIN — cria bin se não existir
@@ -552,28 +556,33 @@ async function salvarNuvem(){
 function salvarLocal(){localStorage.setItem('ccb_fallback',JSON.stringify(DB));}
 
 function reRenderAtivo(){
-  const id=document.querySelector('.panel.active')?.id?.replace('panel-','');
-  if(id==='lista') renderListagem();
-  if(id==='dashboard') renderDashboard();
-  if(id==='solicitantes') renderSol();
-  if(id==='itens') renderItens();
+  try{
+    const p=document.querySelector('.panel.active');
+    if(!p) return;
+    const id=p.id.replace('panel-','');
+    if(id==='lista') renderListagem();
+    if(id==='dashboard') renderDashboard();
+    if(id==='solicitantes') renderSol();
+    if(id==='itens') renderItens();
+  }catch(e){console.warn('reRenderAtivo:',e);}
 }
 
 /* ══════════════════════════════════════
    LOGIN
 ══════════════════════════════════════ */
 function abrirLogin(){
-  if(adminLogado){adminLogado=false;document.getElementById('adminBtn').textContent='🔒 Admin';toast('🔒 Sessão encerrada.');return;}
+  if(adminLogado){adminLogado=false;$set('adminBtn','textContent','🔒 Admin');toast('🔒 Sessão encerrada.');return;}
   document.getElementById('loginPwd').value='';
   document.getElementById('loginErr').style.display='none';
   openModal('modalLogin');
   setTimeout(()=>document.getElementById('loginPwd').focus(),300);
 }
 function confirmarLogin(){
-  if(document.getElementById('loginPwd').value===ADMIN_SENHA){
-    adminLogado=true;document.getElementById('adminBtn').textContent='🔓 Admin';
+  const pwd=$('loginPwd');if(!pwd)return;
+  if(pwd.value===ADMIN_SENHA){
+    adminLogado=true;$set('adminBtn','textContent','🔓 Admin');
     closeModal('modalLogin');toast('✅ Admin logado!');renderSol();renderItens();
-  }else document.getElementById('loginErr').style.display='block';
+  }else{const e=$('loginErr');if(e)e.style.display='block';}
 }
 
 /* ══════════════════════════════════════
@@ -695,15 +704,19 @@ async function confirmarImport(){
    DROPDOWNS
 ══════════════════════════════════════ */
 function preencherDropdowns(){
-  const sel=document.getElementById('solicitante');if(!sel)return;
-  sel.innerHTML='<option value="">Selecione...</option>'+DB.solicitantes.map(s=>`<option>${s}</option>`).join('');
+  try{
+    const sel=$('solicitante');if(!sel)return;
+    sel.innerHTML='<option value="">Selecione...</option>'+DB.solicitantes.map(s=>`<option>${s}</option>`).join('');
+  }catch(e){console.warn('preencherDropdowns:',e);}
 }
 function preencherNomes(){
-  SIG_KEYS.forEach(key=>{
-    const sel=document.getElementById('nome-'+key);if(!sel)return;
-    const cur=sel.value;
-    sel.innerHTML='<option value="">Nome...</option>'+DB.solicitantes.map(s=>`<option ${s===cur?'selected':''}>${s}</option>`).join('');
-  });
+  try{
+    SIG_KEYS.forEach(key=>{
+      const sel=$('nome-'+key);if(!sel)return;
+      const cur=sel.value;
+      sel.innerHTML='<option value="">Nome...</option>'+DB.solicitantes.map(s=>`<option ${s===cur?'selected':''}>${s}</option>`).join('');
+    });
+  }catch(e){console.warn('preencherNomes:',e);}
 }
 function updDatalist(){
   let dl=document.getElementById('itensLista');
@@ -767,10 +780,11 @@ document.getElementById('formReq').addEventListener('submit',async function(e){
   DB.requisicoes.push({id:Date.now(),...d});
   loading(true,'Salvando...');await salvarNuvem();loading(false);
   toast(`✅ Requisição ${fmtNum(DB.reqCounter)} salva!`);
-  this.reset();document.getElementById('itensContainer').innerHTML='';
-  document.getElementById('totalGeral').innerText='R$ 0,00';
+  this.reset();
+  const ic=$('itensContainer');if(ic)ic.innerHTML='';
+  $set('totalGeral','innerText','R$ 0,00');
   SIG_KEYS.forEach(k=>limparSig(k));atualizarEmpty();updNum();preencherNomes();
-  document.getElementById('dataReq').value=new Date().toISOString().split('T')[0];
+  const dr=$('dataReq');if(dr)dr.value=new Date().toISOString().split('T')[0];
 });
 
 /* ══════════════════════════════════════
@@ -901,8 +915,9 @@ async function salvarSigRemota(){
    LISTAGEM
 ══════════════════════════════════════ */
 function renderListagem(){
-  const t=document.getElementById('tabelaReq');
-  if(!DB.requisicoes.length){t.innerHTML='';t.closest('.table-wrap').innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Nenhuma requisição.</p></div>';return;}
+  const t=$('tabelaReq');
+  if(!t) return;
+  if(!DB.requisicoes.length){t.innerHTML='';const tw=t.closest('.table-wrap');if(tw)tw.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Nenhuma requisição.</p></div>';return;}
   t.innerHTML=`<thead><tr><th>Nº</th><th>Data</th><th>Igreja</th><th>Categoria</th><th>Solicitante</th><th>Total</th><th>✍️</th><th>Ações</th></tr></thead><tbody>`+
   DB.requisicoes.slice().reverse().map((r,idx)=>{
     const ri=DB.requisicoes.length-1-idx;
@@ -937,7 +952,8 @@ async function excluirReq(idx){
    DASHBOARD
 ══════════════════════════════════════ */
 function renderDashboard(){
-  const div=document.getElementById('dashContent');
+  const div=$('dashContent');
+  if(!div) return;
   if(!DB.requisicoes.length){div.innerHTML='<div class="empty-state"><div class="icon">📊</div><p>Sem dados ainda.</p></div>';return;}
   const tG=DB.requisicoes.reduce((s,r)=>s+(r.itens||[]).reduce((ss,it)=>ss+it.qtd*it.custo,0),0);
   const assin=DB.requisicoes.filter(r=>r.sigMin&&r.sigTec&&r.sigMan).length;
@@ -968,9 +984,16 @@ function renderDashboard(){
    INICIAR
 ══════════════════════════════════════ */
 function inicializarUI(){
-  updNum();preencherDropdowns();preencherNomes();updDatalist();atualizarEmpty();
-  setTimeout(initCanvases,120);
-  document.getElementById('dataReq').value=new Date().toISOString().split('T')[0];
+  try{
+    updNum();
+    preencherDropdowns();
+    preencherNomes();
+    updDatalist();
+    atualizarEmpty();
+    setTimeout(initCanvases,200);
+    const dr=$('dataReq');
+    if(dr) dr.value=new Date().toISOString().split('T')[0];
+  }catch(e){console.warn('inicializarUI:',e);}
 }
 window.addEventListener('load',async()=>{
   loading(true,'Conectando...');
