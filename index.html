@@ -425,14 +425,12 @@ tbody tr:hover{background:var(--cream);}
    primeira vez e salvo no localStorage
    para reutilização.
 ══════════════════════════════════════ */
-// ⚠️ Cole aqui o endereço web onde este arquivo está hospedado.
-// Ex: 'https://seusite.com/ccb.html' ou 'https://usuario.github.io/ccb/index.html'
-// Se deixar vazio (''), o sistema tentará usar o endereço atual.
-const SITE_URL = '';
+// Endereço público do sistema (GitHub Pages)
+const SITE_URL = 'https://gilbertoppcp-arch.github.io/ccb-vinhedo/index.html';
 
 const JBIN_KEY = '$2a$10$MqfzCxW/7NNGHjsLPZSCauFZDPl/di4rQ5obqIFhVzAZX11m62wEe';
 const JBIN_BASE = 'https://api.jsonbin.io/v3';
-let JBIN_BIN = localStorage.getItem('ccb_bin_id') || '';
+let JBIN_BIN = localStorage.getItem('ccb_bin_id') || '6a00c18b5d6c3911694c7820';
 
 /* ══════════════════════════════════════
    STATE
