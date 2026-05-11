@@ -243,6 +243,9 @@ tbody tr:hover{background:var(--cream);}
 .login-err{color:var(--danger);font-size:.78rem;margin-bottom:10px;display:none;text-align:center;}
 .login-btn{width:100%;padding:12px;font-size:.95rem;}
 
+/* ── Alterar senha modal ── */
+.senha-info{font-size:.8rem;color:var(--text-muted);margin-bottom:18px;background:var(--cream);border-radius:var(--radius);padding:10px 12px;}
+
 /* ── Usuarios panel ── */
 .usuarios-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:16px;}
 .usuario-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
@@ -339,7 +342,17 @@ tbody tr:hover{background:var(--cream);}
         <span id="numReqDisplay" style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:700;">—</span>
       </div>
       <button class="btn btn-sm" type="submit" form="formReq">💾 Salvar</button>
-      <button class="btn btn-sm" id="adminBtn" onclick="abrirMenuAdmin()">👤</button>
+      <div style="position:relative;display:inline-block;">
+        <button class="btn btn-sm" id="adminBtn" onclick="toggleMenuUsuario()">👤</button>
+        <div id="menuUsuario" style="display:none;position:absolute;right:0;top:110%;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);min-width:170px;z-index:200;overflow:hidden;">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--cream-dark);">
+            <div id="menuNomeUsuario" style="font-size:.82rem;font-weight:600;color:var(--navy);"></div>
+            <div id="menuRoleUsuario" style="font-size:.72rem;color:var(--text-muted);"></div>
+          </div>
+          <button onclick="abrirAlterarSenha();toggleMenuUsuario();" style="width:100%;padding:10px 14px;border:none;background:transparent;text-align:left;font-family:'DM Sans',sans-serif;font-size:.84rem;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text);">🔑 Alterar Senha</button>
+          <button onclick="fazerLogout();" style="width:100%;padding:10px 14px;border:none;background:transparent;text-align:left;font-family:'DM Sans',sans-serif;font-size:.84rem;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--danger);border-top:1px solid var(--cream-dark);">👋 Sair</button>
+        </div>
+      </div>
       <button class="btn btn-sm" onclick="imprimirDireto()">🖨️</button>
     </div>
   </div>
@@ -412,6 +425,25 @@ tbody tr:hover{background:var(--cream);}
 </div>
 
 </div><!-- /appWrap -->
+
+<!-- MODAL: Alterar Senha -->
+<div class="modal-overlay" id="modalSenha" onclick="closeSeFora(event,'modalSenha')">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>🔑 Alterar Senha</h3><button class="modal-close" onclick="closeModal('modalSenha')">✕</button></div>
+    <div class="modal-body">
+      <div class="senha-info" id="senhaInfoUser"></div>
+      <div class="field" style="margin-bottom:12px;"><label>Senha Atual</label><input type="password" id="senhaAtual" placeholder="Digite sua senha atual"></div>
+      <div class="field" style="margin-bottom:12px;"><label>Nova Senha</label><input type="password" id="senhaNova" placeholder="Mínimo 4 caracteres"></div>
+      <div class="field"><label>Confirmar Nova Senha</label><input type="password" id="senhaConfirm" placeholder="Repita a nova senha"></div>
+      <p id="senhaErr" style="color:var(--danger);font-size:.78rem;margin-top:10px;display:none;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalSenha')">Cancelar</button>
+      <button class="btn" onclick="confirmarAlterarSenha()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAIS -->
 <div class="modal-overlay" id="modalPreview" onclick="closeSeFora(event,'modalPreview')">
@@ -613,7 +645,9 @@ function fazerLogin(){
 
   // Checar admin padrão
   let encontrado = null;
-  if(loginVal===ADMIN_PADRAO.login && senhaVal===ADMIN_PADRAO.senha){
+  // Senha do admin pode ter sido alterada (salva em DB.senhaPadrao)
+  const senhaAdmin = DB.senhaPadrao || ADMIN_PADRAO.senha;
+  if(loginVal===ADMIN_PADRAO.login && senhaVal===senhaAdmin){
     encontrado = ADMIN_PADRAO;
   } else {
     // Checar usuários cadastrados no DB
@@ -651,10 +685,68 @@ function fazerLogout(){
 }
 
 // Admin btn agora mostra menu de logout
-function abrirMenuAdmin(){
-  if(!usuarioLogado) return;
-  if(confirm('Deseja sair do sistema?')) fazerLogout();
+function toggleMenuUsuario(){
+  const m=$('menuUsuario'); if(!m)return;
+  const isOpen=m.style.display==='block';
+  m.style.display=isOpen?'none':'block';
+  if(!isOpen&&usuarioLogado){
+    $set('menuNomeUsuario','textContent',usuarioLogado.nome);
+    $set('menuRoleUsuario','textContent',usuarioLogado.role==='admin'?'Administrador':'Usuário');
+  }
 }
+// Fechar menu ao clicar fora
+document.addEventListener('click',e=>{
+  const m=$('menuUsuario'),btn=$('adminBtn');
+  if(m&&btn&&!btn.closest('div').contains(e.target)) m.style.display='none';
+});
+
+function abrirAlterarSenha(){
+  if(!usuarioLogado)return;
+  $set('senhaAtual','value','');
+  $set('senhaNova','value','');
+  $set('senhaConfirm','value','');
+  const el=$('senhaErr'); if(el)el.style.display='none';
+  $set('senhaInfoUser','textContent','Usuário: '+usuarioLogado.nome+' ('+usuarioLogado.login+')');
+  openModal('modalSenha');
+  setTimeout(()=>{const el=$('senhaAtual');if(el)el.focus();},300);
+}
+
+async function confirmarAlterarSenha(){
+  const atual=($('senhaAtual')||{value:''}).value;
+  const nova=($('senhaNova')||{value:''}).value;
+  const confirm2=($('senhaConfirm')||{value:''}).value;
+  const errEl=$('senhaErr');
+
+  function showErr(msg){if(errEl){errEl.textContent=msg;errEl.style.display='block';}}
+
+  // Verificar senha atual
+  const senhaCorreta = usuarioLogado.login===ADMIN_PADRAO.login
+    ? atual===ADMIN_PADRAO.senha || atual===(DB.senhaPadrao||ADMIN_PADRAO.senha)
+    : atual===usuarioLogado.senha;
+
+  if(!senhaCorreta){showErr('Senha atual incorreta.');return;}
+  if(nova.length<4){showErr('Nova senha deve ter no mínimo 4 caracteres.');return;}
+  if(nova!==confirm2){showErr('As senhas não coincidem.');return;}
+
+  // Salvar nova senha
+  if(usuarioLogado.login===ADMIN_PADRAO.login){
+    // Admin padrão — salvar no DB
+    if(!DB.senhaPadrao) DB.senhaPadrao='';
+    DB.senhaPadrao=nova;
+    ADMIN_PADRAO.senha=nova;
+  } else {
+    // Usuário comum — atualizar no array
+    const u=(DB.usuarios||[]).find(x=>x.id===usuarioLogado.id);
+    if(u){u.senha=nova; usuarioLogado.senha=nova;}
+  }
+  loading(true,'Salvando...');
+  await salvarNuvem();
+  loading(false);
+  closeModal('modalSenha');
+  toast('✅ Senha alterada com sucesso!');
+}
+
+function abrirMenuAdmin(){ toggleMenuUsuario(); }
 
 /* ══════════════════════════════════════
    NAV
