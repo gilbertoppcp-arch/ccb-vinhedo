@@ -95,6 +95,28 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .item-del{padding:6px 8px!important;min-height:36px!important;flex-shrink:0;}
 /* Mobile: stack into 2 rows */
 @media(max-width:639px){
+  /* Hide table on mobile, show cards instead */
+  .table-mobile-hide{display:none!important;}
+  .req-cards{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
+  .req-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+  .req-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .req-card-num{font-family:"Playfair Display",serif;font-size:1rem;font-weight:700;color:var(--navy);}
+  .req-card-sigs{font-size:.82rem;letter-spacing:1px;}
+  .req-card-body{font-size:.82rem;color:var(--text);margin-bottom:10px;line-height:1.6;}
+  .req-card-val{font-weight:700;color:var(--navy);font-size:.9rem;}
+  .req-card-actions{display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--cream-dark);}
+  .req-card-actions .btn,.req-card-actions .btn-wa{flex:1;min-width:0;font-size:.72rem;padding:7px 4px;}
+  .req-card-actions .btn-wa{flex:0;width:36px;}
+  /* Fix form grid single column on mobile */
+  .form-grid{grid-template-columns:1fr!important;}
+  /* Fix cad-row stacking */
+  .cad-row{flex-direction:column;}
+  .cad-row .field{min-width:100%!important;}
+  /* Fix modal full width */
+  .modal{border-radius:14px 14px 0 0;}
+  /* Fix action bar */
+  .action-bar .btn{font-size:.78rem;padding:10px 6px;}
+
   .item-row-inner{grid-template-columns:1fr 58px;grid-template-rows:auto auto auto;row-gap:5px;}
   .item-desc{grid-column:1;}
   .item-und{grid-column:2;}
@@ -140,7 +162,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 /* Tables */
 .table-wrap{overflow-x:auto;margin-top:12px;border-radius:var(--radius);border:1px solid var(--border);-webkit-overflow-scrolling:touch;}
-table{width:100%;border-collapse:collapse;min-width:560px;}
+table{width:100%;border-collapse:collapse;}
 thead tr{background:var(--navy);}
 th{padding:10px 11px;text-align:left;font-size:.64rem;font-weight:600;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
 td{padding:9px 11px;border-bottom:1px solid var(--cream-dark);font-size:.8rem;vertical-align:middle;}
@@ -879,8 +901,17 @@ async function salvarSigRemota(){
 function renderListagem(){
   const t=$('tabelaReq');
   if(!t) return;
-  if(!DB.requisicoes.length){t.innerHTML='';const tw=t.closest('.table-wrap');if(tw)tw.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Nenhuma requisição.</p></div>';return;}
+  if(!DB.requisicoes.length){
+    t.innerHTML='';
+    const tw=t.closest('.table-wrap');
+    if(tw)tw.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Nenhuma requisição.</p></div>';
+    return;
+  }
+  // Remove old cards if any
+  const oldCards=$('reqCards');
+  if(oldCards) oldCards.remove();
   t.innerHTML=`<thead><tr><th>Nº</th><th>Data</th><th>Igreja</th><th>Categoria</th><th>Solicitante</th><th>Total</th><th>✍️</th><th>Ações</th></tr></thead><tbody>`+
+  // Desktop table
   DB.requisicoes.slice().reverse().map((r,idx)=>{
     const ri=DB.requisicoes.length-1-idx;
     const tot=(r.itens||[]).reduce((s,it)=>s+it.qtd*it.custo,0);
@@ -904,6 +935,43 @@ function renderListagem(){
     </tr>`;
   }).join('')+`</tbody>`;
 }
+  // Generate mobile cards
+  const isMobile = window.innerWidth < 640;
+  if(isMobile){
+    const tw=t.closest('.table-wrap');
+    if(tw){
+      let cards='<div id="reqCards" class="req-cards">';
+      DB.requisicoes.slice().reverse().forEach((r,idx)=>{
+        const ri=DB.requisicoes.length-1-idx;
+        const tot=(r.itens||[]).reduce((s,it)=>s+it.qtd*it.custo,0);
+        const sigs=[r.sigMin?'✅':'⬜',r.sigTec?'✅':'⬜',r.sigMan?'✅':'⬜'].join('');
+        cards+=`<div class="req-card">
+          <div class="req-card-top">
+            <span class="req-card-num">Nº ${fmtNum(r.num)}</span>
+            <span class="req-card-sigs">${sigs}</span>
+          </div>
+          <div class="req-card-body">
+            📅 ${fmtData(r.data)}<br>
+            ⛪ ${r.igreja||'—'}<br>
+            📂 ${r.categoria||'—'}<br>
+            👤 ${r.solicitante||'—'}
+          </div>
+          <div class="req-card-val">${fmtM(tot)}</div>
+          <div class="req-card-actions">
+            <button class="btn btn-sm" onclick="abrirPreview(DB.requisicoes[${ri}])" title="Ver">👁 Ver</button>
+            <button class="btn btn-sm" onclick="imprimirDireto(DB.requisicoes[${ri}])" title="Imprimir">🖨️</button>
+            <button class="btn btn-sm" onclick="abrirSigRemota(${ri})" title="Assinar">✍️</button>
+            <button class="btn-wa" onclick="enviarWA(DB.requisicoes[${ri}])" title="WhatsApp">${WA_SVG}</button>
+            <button class="btn btn-del btn-sm" onclick="excluirReq(${ri})">🗑</button>
+          </div>
+        </div>`;
+      });
+      cards+='</div>';
+      tw.innerHTML=cards;
+      return;
+    }
+  }
+
 async function excluirReq(idx){
   if(!confirm(`Excluir Req. ${fmtNum(DB.requisicoes[idx].num)}?`))return;
   DB.requisicoes.splice(idx,1);loading(true,'Excluindo...');await salvarNuvem();loading(false);
