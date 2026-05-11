@@ -462,12 +462,16 @@ const FS_URL=`${FB_BASE}/dados/ccb?key=${FB_API_KEY}`;
 
 async function carregarDados(showToast=false){
   loading(true,'Buscando dados...');
+  // Timeout de 10 segundos
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),10000);
   try{
-    const r=await fetch(FS_URL);
+    const r=await fetch(FS_URL,{signal:controller.signal});
+    clearTimeout(timeout);
     if(r.status===404){
-      await salvarNuvem();
       loading(false);
-      setSS(true,'Banco iniciado!');
+      setSS(true,'Banco vazio — pronto para usar!');
+      await salvarNuvem();
       inicializarUI();
       return;
     }
@@ -479,17 +483,25 @@ async function carregarDados(showToast=false){
     DB=Object.assign({requisicoes:[],solicitantes:[],itensCadastrados:[],reqCounter:0},raw);
     localStorage.setItem('ccb_fallback',JSON.stringify(DB));
     const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    setSS(true,'Atualizado '+t);
+    setSS(true,'✅ Atualizado '+t);
     loading(false);
     updNum(); preencherDropdowns(); preencherNomes(); updDatalist();
     if(showToast) toast('✅ Dados atualizados!');
     reRenderAtivo();
   }catch(e){
+    clearTimeout(timeout);
     loading(false);
-    setSS(false,'Erro: '+e.message);
+    const motivo=e.name==='AbortError'?'Tempo esgotado':'Erro: '+e.message;
+    setSS(false,motivo);
     const saved=localStorage.getItem('ccb_fallback');
-    if(saved){DB=JSON.parse(saved);reRenderAtivo();toast('⚠️ Dados locais.');}
-    else toast('❌ Sem conexão.');
+    if(saved){
+      DB=JSON.parse(saved);
+      reRenderAtivo();
+      updNum(); preencherDropdowns(); preencherNomes(); updDatalist();
+      toast('⚠️ Usando dados salvos localmente.');
+    } else {
+      toast('❌ Sem conexão e sem dados locais.');
+    }
   }
 }
 
@@ -1003,10 +1015,14 @@ function inicializarUI(){
   }catch(e){console.warn('inicializarUI:',e);}
 }
 window.addEventListener('load',async()=>{
-  loading(true,'Conectando...');
-  await carregarDados();
+  // Mostrar UI imediatamente com dados locais se houver
+  const saved=localStorage.getItem('ccb_fallback');
+  if(saved){
+    try{DB=JSON.parse(saved);}catch(e){}
+  }
   inicializarUI();
-  // Auto-refresh a cada 30s
+  // Depois buscar dados frescos na nuvem
+  await carregarDados();
   setInterval(()=>carregarDados(),300000);
 });
 </script>
