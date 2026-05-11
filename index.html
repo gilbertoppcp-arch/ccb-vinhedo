@@ -419,18 +419,12 @@ tbody tr:hover{background:var(--cream);}
 
 <script>
 /* ══════════════════════════════════════
-   JSONBIN CONFIG
-   A API Key é usada para criar/ler o bin.
-   O Bin ID é criado automaticamente na
-   primeira vez e salvo no localStorage
-   para reutilização.
+   FIREBASE CONFIG
 ══════════════════════════════════════ */
-// Endereço público do sistema (GitHub Pages)
 const SITE_URL = 'https://gilbertoppcp-arch.github.io/ccb-vinhedo/index.html';
-
-const JBIN_KEY = '$2a$10$MqfzCxW/7NNGHjsLPZSCauFZDPl/di4rQ5obqIFhVzAZX11m62wEe';
-const JBIN_BASE = 'https://api.jsonbin.io/v3';
-const JBIN_BIN = '6a00c18b5d6c3911694c7820'; // Bin ID fixo — todos os dispositivos usam o mesmo banco
+const FB_PROJECT = 'ccb-vinhedo';
+const FB_API_KEY = 'AIzaSyCVgaDZ3O6ZSRqZIahkdk3wXQw-f1B1CAg';
+const FB_BASE = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents`;
 
 /* ══════════════════════════════════════
    STATE
@@ -460,23 +454,81 @@ function setSS(ok,msg){$set('syncDot','className','sync-dot'+(ok?'':' off'));$se
 function updNum(){const n=fmtNum(DB.reqCounter+1);$set('headerNextNum','textContent',n);$set('numReqDisplay','textContent',n);const p=$('reqPill');if(p)p.style.display='block';}
 
 /* ══════════════════════════════════════
-   JSONBIN — cria bin se não existir
+   FIREBASE — Firestore REST API
+   Não precisa de SDK — usa fetch direto
+   Funciona em qualquer dispositivo
 ══════════════════════════════════════ */
-async function garantirBin(){
-  // Bin ID fixo — não cria novo, não usa localStorage
-  return true;
+
+// Converte objeto JS para formato Firestore
+function toFS(obj){
+  const fields={};
+  for(const[k,v] of Object.entries(obj)){
+    if(typeof v==='string') fields[k]={stringValue:v};
+    else if(typeof v==='number') fields[k]={integerValue:String(v)};
+    else if(typeof v==='boolean') fields[k]={booleanValue:v};
+    else if(Array.isArray(v)) fields[k]={arrayValue:{values:v.map(toFSVal)}};
+    else if(v===null||v===undefined) fields[k]={nullValue:null};
+    else if(typeof v==='object') fields[k]={mapValue:{fields:toFS(v)}};
+  }
+  return fields;
 }
+function toFSVal(v){
+  if(typeof v==='string') return{stringValue:v};
+  if(typeof v==='number') return{integerValue:String(v)};
+  if(typeof v==='boolean') return{booleanValue:v};
+  if(Array.isArray(v)) return{arrayValue:{values:v.map(toFSVal)}};
+  if(v===null||v===undefined) return{nullValue:null};
+  if(typeof v==='object') return{mapValue:{fields:toFS(v)}};
+  return{stringValue:String(v)};
+}
+
+// Converte formato Firestore de volta para objeto JS
+function fromFS(fields){
+  if(!fields) return {};
+  const obj={};
+  for(const[k,v] of Object.entries(fields)){
+    if('stringValue' in v) obj[k]=v.stringValue;
+    else if('integerValue' in v) obj[k]=Number(v.integerValue);
+    else if('doubleValue' in v) obj[k]=Number(v.doubleValue);
+    else if('booleanValue' in v) obj[k]=v.booleanValue;
+    else if('nullValue' in v) obj[k]=null;
+    else if('arrayValue' in v) obj[k]=(v.arrayValue.values||[]).map(fromFSVal);
+    else if('mapValue' in v) obj[k]=fromFS(v.mapValue.fields||{});
+  }
+  return obj;
+}
+function fromFSVal(v){
+  if('stringValue' in v) return v.stringValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return Number(v.doubleValue);
+  if('booleanValue' in v) return v.booleanValue;
+  if('nullValue' in v) return null;
+  if('arrayValue' in v) return(v.arrayValue.values||[]).map(fromFSVal);
+  if('mapValue' in v) return fromFS(v.mapValue.fields||{});
+  return null;
+}
+
+const FS_URL=`${FB_BASE}/ccb?key=${FB_API_KEY}`;
 
 async function carregarDados(showToast=false){
   loading(true,'Buscando dados...');
   try{
-    const r=await fetch(`${JBIN_BASE}/b/${JBIN_BIN}/latest`,{headers:{'X-Master-Key':JBIN_KEY}});
+    const r=await fetch(FS_URL);
+    if(r.status===404){
+      // Documento não existe ainda — salvar estado inicial
+      await salvarNuvem();
+      loading(false);
+      setSS(true,'Banco iniciado!');
+      inicializarUI();
+      return;
+    }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data=await r.json();
-    DB=Object.assign({requisicoes:[],solicitantes:[],itensCadastrados:[],reqCounter:0},data.record);
+    const raw=fromFS(data.fields||{});
+    DB=Object.assign({requisicoes:[],solicitantes:[],itensCadastrados:[],reqCounter:0},raw);
     localStorage.setItem('ccb_fallback',JSON.stringify(DB));
     const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    setSS(true,`Atualizado ${t} · Bin: ${JBIN_BIN}`);
+    setSS(true,'Atualizado '+t);
     loading(false);
     updNum(); preencherDropdowns(); preencherNomes(); updDatalist();
     if(showToast) toast('✅ Dados atualizados!');
@@ -485,15 +537,18 @@ async function carregarDados(showToast=false){
     loading(false);
     setSS(false,'Erro: '+e.message);
     const saved=localStorage.getItem('ccb_fallback');
-    if(saved){DB=JSON.parse(saved);toast('⚠️ Usando dados locais.');}
+    if(saved){DB=JSON.parse(saved);reRenderAtivo();toast('⚠️ Dados locais.');}
     else toast('❌ Sem conexão.');
   }
 }
 
 async function salvarNuvem(){
-  if(!JBIN_BIN){salvarLocal();return;}
   try{
-    const r=await fetch(`${JBIN_BASE}/b/${JBIN_BIN}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY},body:JSON.stringify(DB)});
+    const r=await fetch(FS_URL,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({fields:toFS(DB)})
+    });
     if(!r.ok) throw new Error('HTTP '+r.status);
     salvarLocal();
     const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
