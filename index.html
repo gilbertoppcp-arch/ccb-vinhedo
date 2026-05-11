@@ -455,58 +455,9 @@ function updNum(){const n=fmtNum(DB.reqCounter+1);$set('headerNextNum','textCont
 
 /* ══════════════════════════════════════
    FIREBASE — Firestore REST API
-   Não precisa de SDK — usa fetch direto
-   Funciona em qualquer dispositivo
+   Armazena tudo como string JSON num
+   único campo — simples e confiável
 ══════════════════════════════════════ */
-
-// Converte objeto JS para formato Firestore
-function toFS(obj){
-  const fields={};
-  for(const[k,v] of Object.entries(obj)){
-    if(typeof v==='string') fields[k]={stringValue:v};
-    else if(typeof v==='number') fields[k]={integerValue:String(v)};
-    else if(typeof v==='boolean') fields[k]={booleanValue:v};
-    else if(Array.isArray(v)) fields[k]={arrayValue:{values:v.map(toFSVal)}};
-    else if(v===null||v===undefined) fields[k]={nullValue:null};
-    else if(typeof v==='object') fields[k]={mapValue:{fields:toFS(v)}};
-  }
-  return fields;
-}
-function toFSVal(v){
-  if(typeof v==='string') return{stringValue:v};
-  if(typeof v==='number') return{integerValue:String(v)};
-  if(typeof v==='boolean') return{booleanValue:v};
-  if(Array.isArray(v)) return{arrayValue:{values:v.map(toFSVal)}};
-  if(v===null||v===undefined) return{nullValue:null};
-  if(typeof v==='object') return{mapValue:{fields:toFS(v)}};
-  return{stringValue:String(v)};
-}
-
-// Converte formato Firestore de volta para objeto JS
-function fromFS(fields){
-  if(!fields) return {};
-  const obj={};
-  for(const[k,v] of Object.entries(fields)){
-    if('stringValue' in v) obj[k]=v.stringValue;
-    else if('integerValue' in v) obj[k]=Number(v.integerValue);
-    else if('doubleValue' in v) obj[k]=Number(v.doubleValue);
-    else if('booleanValue' in v) obj[k]=v.booleanValue;
-    else if('nullValue' in v) obj[k]=null;
-    else if('arrayValue' in v) obj[k]=(v.arrayValue.values||[]).map(fromFSVal);
-    else if('mapValue' in v) obj[k]=fromFS(v.mapValue.fields||{});
-  }
-  return obj;
-}
-function fromFSVal(v){
-  if('stringValue' in v) return v.stringValue;
-  if('integerValue' in v) return Number(v.integerValue);
-  if('doubleValue' in v) return Number(v.doubleValue);
-  if('booleanValue' in v) return v.booleanValue;
-  if('nullValue' in v) return null;
-  if('arrayValue' in v) return(v.arrayValue.values||[]).map(fromFSVal);
-  if('mapValue' in v) return fromFS(v.mapValue.fields||{});
-  return null;
-}
 
 const FS_URL=`${FB_BASE}/ccb?key=${FB_API_KEY}`;
 
@@ -515,7 +466,6 @@ async function carregarDados(showToast=false){
   try{
     const r=await fetch(FS_URL);
     if(r.status===404){
-      // Documento não existe ainda — salvar estado inicial
       await salvarNuvem();
       loading(false);
       setSS(true,'Banco iniciado!');
@@ -524,7 +474,9 @@ async function carregarDados(showToast=false){
     }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data=await r.json();
-    const raw=fromFS(data.fields||{});
+    const raw=data.fields&&data.fields.dados&&data.fields.dados.stringValue
+      ? JSON.parse(data.fields.dados.stringValue)
+      : {};
     DB=Object.assign({requisicoes:[],solicitantes:[],itensCadastrados:[],reqCounter:0},raw);
     localStorage.setItem('ccb_fallback',JSON.stringify(DB));
     const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -544,19 +496,23 @@ async function carregarDados(showToast=false){
 
 async function salvarNuvem(){
   try{
+    const payload={fields:{dados:{stringValue:JSON.stringify(DB)}}};
     const r=await fetch(FS_URL,{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({fields:toFS(DB)})
+      body:JSON.stringify(payload)
     });
-    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(!r.ok){
+      const err=await r.text();
+      throw new Error('HTTP '+r.status+': '+err);
+    }
     salvarLocal();
     const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     setSS(true,'Salvo '+ts);
   }catch(e){
     salvarLocal();
     setSS(false,'Erro ao salvar: '+e.message);
-    toast('⚠️ Salvo localmente.');
+    toast('⚠️ Salvo localmente. Erro: '+e.message,5000);
   }
 }
 function salvarLocal(){localStorage.setItem('ccb_fallback',JSON.stringify(DB));}
