@@ -1,4 +1,3 @@
-[index.html](https://github.com/user-attachments/files/27577419/index.html)
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -431,7 +430,7 @@ const SITE_URL = 'https://gilbertoppcp-arch.github.io/ccb-vinhedo/index.html';
 
 const JBIN_KEY = '$2a$10$MqfzCxW/7NNGHjsLPZSCauFZDPl/di4rQ5obqIFhVzAZX11m62wEe';
 const JBIN_BASE = 'https://api.jsonbin.io/v3';
-let JBIN_BIN = localStorage.getItem('ccb_bin_id') || '6a00c18b5d6c3911694c7820';
+const JBIN_BIN = '6a00c18b5d6c3911694c7820'; // Bin ID fixo — todos os dispositivos usam o mesmo banco
 
 /* ══════════════════════════════════════
    STATE
@@ -464,63 +463,14 @@ function updNum(){const n=fmtNum(DB.reqCounter+1);$set('headerNextNum','textCont
    JSONBIN — cria bin se não existir
 ══════════════════════════════════════ */
 async function garantirBin(){
-  // Se já temos um bin ID salvo, tenta usar
-  if(JBIN_BIN){
-    try{
-      const r=await fetch(`${JBIN_BASE}/b/${JBIN_BIN}/latest`,{headers:{'X-Master-Key':JBIN_KEY}});
-      if(r.ok){
-        const data=await r.json();
-        DB=Object.assign({requisicoes:[],solicitantes:[],itensCadastrados:[],reqCounter:0},data.record);
-        setSS(true,'Conectado · Bin: '+JBIN_BIN);
-        return true;
-      }
-      // Bin não existe mais — vai criar novo abaixo
-      JBIN_BIN=''; localStorage.removeItem('ccb_bin_id');
-    }catch(e){}
-  }
-  // Criar novo bin
-  setSS(false,'Criando banco de dados...');
-  loading(true,'Criando banco de dados compartilhado...');
-  try{
-    const r=await fetch(`${JBIN_BASE}/b`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY,'X-Bin-Name':'CCB-Vinhedo','X-Bin-Private':'false'},
-      body:JSON.stringify(DB)
-    });
-    if(!r.ok){
-      const txt=await r.text();
-      throw new Error(`HTTP ${r.status}: ${txt}`);
-    }
-    const data=await r.json();
-    JBIN_BIN=data.metadata.id;
-    localStorage.setItem('ccb_bin_id',JBIN_BIN);
-    setSS(true,'Banco criado! Bin: '+JBIN_BIN);
-    loading(false);
-    toast('✅ Banco de dados criado: '+JBIN_BIN);
-    // Mostrar bin ID para o usuário poder compartilhar
-    setTimeout(()=>alert(`✅ Banco criado com sucesso!\n\nBin ID: ${JBIN_BIN}\n\nGuarde este ID para configurar outros dispositivos.\nO sistema já está funcionando neste dispositivo.`),500);
-    return true;
-  }catch(e){
-    loading(false);
-    setSS(false,'Erro ao criar banco: '+e.message);
-    toast('❌ Erro: '+e.message,5000);
-    // Fallback local
-    const saved=localStorage.getItem('ccb_fallback');
-    if(saved) DB=JSON.parse(saved);
-    return false;
-  }
+  // Bin ID fixo — não cria novo, não usa localStorage
+  return true;
 }
 
 async function carregarDados(showToast=false){
-  if(!JBIN_BIN){await garantirBin();inicializarUI();return;}
   loading(true,'Buscando dados...');
   try{
     const r=await fetch(`${JBIN_BASE}/b/${JBIN_BIN}/latest`,{headers:{'X-Master-Key':JBIN_KEY}});
-    if(r.status===404){
-      // Bin foi deletado — recriar
-      JBIN_BIN=''; localStorage.removeItem('ccb_bin_id');
-      loading(false); await garantirBin(); inicializarUI(); return;
-    }
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data=await r.json();
     DB=Object.assign({requisicoes:[],solicitantes:[],itensCadastrados:[],reqCounter:0},data.record);
@@ -546,8 +496,8 @@ async function salvarNuvem(){
     const r=await fetch(`${JBIN_BASE}/b/${JBIN_BIN}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY},body:JSON.stringify(DB)});
     if(!r.ok) throw new Error('HTTP '+r.status);
     salvarLocal();
-    const t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    setSS(true,'Salvo '+t);
+    const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    setSS(true,'Salvo '+ts);
   }catch(e){
     salvarLocal();
     setSS(false,'Erro ao salvar: '+e.message);
