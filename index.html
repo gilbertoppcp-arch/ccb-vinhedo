@@ -874,15 +874,7 @@ function preencherDropdowns(){
     sel.innerHTML='<option value="">Selecione...</option>'+DB.solicitantes.map(s=>`<option>${s}</option>`).join('');
   }catch(e){console.warn('preencherDropdowns:',e);}
 }
-function preencherNomes(){
-  try{
-    SIG_KEYS.forEach(key=>{
-      const sel=$('nome-'+key);if(!sel)return;
-      const cur=sel.value;
-      sel.innerHTML='<option value="">Nome...</option>'+DB.solicitantes.map(s=>`<option ${s===cur?'selected':''}>${s}</option>`).join('');
-    });
-  }catch(e){console.warn('preencherNomes:',e);}
-}
+function preencherNomes(){ /* nomes agora são digitados livremente */ }
 function updDatalist(){
   let dl=document.getElementById('itensLista');
   if(!dl){dl=document.createElement('datalist');dl.id='itensLista';document.body.appendChild(dl);}
@@ -1055,7 +1047,7 @@ function abrirSigRemota(idx){
     <div class="field" style="margin-bottom:10px;"><label>Campo</label>
       <select id="sigField"><option value="min"${r.sigMin?' disabled':''}>Ministério Local${r.sigMin?' ✅':''}</option><option value="tec"${r.sigTec?' disabled':''}>Área Técnica${r.sigTec?' ✅':''}</option><option value="man"${r.sigMan?' disabled':''}>Manutenção${r.sigMan?' ✅':''}</option></select></div>
     <div class="field" style="margin-bottom:14px;"><label>Nome</label>
-      <select id="sigNome"><option value="">Selecione...</option>${DB.solicitantes.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <input type="text" id="sigNome" placeholder="Digite o nome completo" autocomplete="name"></div>
     <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
       <div style="background:var(--navy);color:#fff;padding:8px 12px;font-size:.67rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px;">Desenhe a assinatura</div>
       <div style="position:relative;background:#fafaf8;"><canvas id="canvas-remote" style="display:block;width:100%;height:130px;cursor:crosshair;touch-action:none;"></canvas>
