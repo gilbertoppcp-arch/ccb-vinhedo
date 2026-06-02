@@ -1202,16 +1202,50 @@ function confirmarAssinatura() {
   const field = $('assField').value;
   const nome  = ($('assNome').value||'').trim();
   if (!nome) { showToast('⚠️ Informe o nome!'); return; }
-  const img = $('assCanvas').toDataURL('image/png');
+
+  // Comprimir assinatura para reduzir tamanho (qualidade 0.5, escala 50%)
+  const canvas = $('assCanvas');
+  const mini = document.createElement('canvas');
+  mini.width  = Math.round(canvas.width  * 0.5);
+  mini.height = Math.round(canvas.height * 0.5);
+  mini.getContext('2d').drawImage(canvas, 0, 0, mini.width, mini.height);
+  const img = mini.toDataURL('image/jpeg', 0.5); // JPEG comprimido
+
   const r = DB.requisicoes[assIdx];
   if (field==='min') { r.sigMin=img; r.nomeMin=nome; }
   else if (field==='tec') { r.sigTec=img; r.nomeTec=nome; }
   else if (field==='man') { r.sigMan=img; r.nomeMan=nome; }
-  salvar();
+
+  // Salva local imediatamente
+  salvarLocal();
   closeOv('ovAssinar');
   renderLista();
   atualizarBadge();
-  showToast('✅ Assinatura salva!');
+  showToast('⏳ Salvando assinatura...');
+
+  // Força envio imediato ao Firebase (sem debounce)
+  clearTimeout(_debTimer);
+  const payload = {
+    requisicoes:  DB.requisicoes,
+    solicitantes: DB.solicitantes,
+    itens:        DB.itens,
+    reqCounter:   DB.counter,
+    counter:      DB.counter,
+  };
+  fetch(FS_DOC, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { dados: { stringValue: JSON.stringify(payload) } } })
+  })
+  .then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    setDot('ok');
+    showToast('✅ Assinatura salva e sincronizada!');
+  })
+  .catch(() => {
+    setDot('off');
+    showToast('⚠️ Salvo localmente. Sem conexão.');
+  });
 }
 
 /* ══════════════════════════════════════
@@ -1305,13 +1339,16 @@ window.addEventListener('load', () => {
       window._modoAssinante = true;
       window._nomeUrl  = params.get('nome')  || '';
       window._campoUrl = params.get('campo') || '';
-      const idx = DB.requisicoes.findIndex(r => String(r.id) === String(reqId));
-      if (idx !== -1) {
-        goTo('lista', $('bn-lista'));
-        setTimeout(() => assinarReq(idx), 400);
-      } else {
-        showToast('⚠️ Requisição não encontrada. Sincronizando...', 4000);
-      }
+      // Recarrega do Firebase para garantir dados mais recentes
+      carregarFirebase().then(() => {
+        const idx = DB.requisicoes.findIndex(r => String(r.id) === String(reqId));
+        if (idx !== -1) {
+          goTo('lista', $('bn-lista'));
+          setTimeout(() => assinarReq(idx), 300);
+        } else {
+          showToast('⚠️ Requisição não encontrada.', 4000);
+        }
+      });
     }
   });
   setInterval(() => carregar(), 60000);
