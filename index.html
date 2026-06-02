@@ -521,20 +521,20 @@ function salvar() {
 /* ══════════════════════════════════════
    CARREGAR DADOS (início + refresh)
 ══════════════════════════════════════ */
-async function carregar(showToast=false) {
-  carregarLocal(); // mostra dados locais instantaneamente
+async function carregar(showT=false) {
+  carregarLocal();
   inicializarUI();
-
   setDot('busy');
   const ok = await carregarFirebase();
   if (ok) {
     setDot('ok');
     inicializarUI();
-    if (showToast) showToast('✅ Sincronizado!');
+    if (showT) showToast('✅ Sincronizado!');
   } else {
     setDot('off');
     showToast('📶 Offline — usando dados locais.');
   }
+  return ok;
 }
 
 function inicializarUI() {
@@ -1000,6 +1000,7 @@ function renderLista() {
           <button class="btn btn-secondary btn-sm" onclick="verReq(${realIdx})">👁 Ver</button>
           <button class="btn btn-primary btn-sm" onclick="abrirNomes(${realIdx})">📝 Nomes · PDF</button>
           <button class="btn btn-secondary btn-sm" onclick="assinarReq(${realIdx})">✍️ Assinar</button>
+          <button class="btn btn-gold btn-sm" onclick="enviarLinkAssinatura(${realIdx})" title="Enviar link para assinar">📲 Link Assinar</button>
           <button class="btn btn-secondary btn-sm" onclick="editarReq(${realIdx})">✏️ Editar</button>
           <button class="btn btn-danger btn-sm" onclick="excluirReq(${realIdx})">🗑</button>
         </div>
@@ -1019,8 +1020,29 @@ function excluirReq(idx) {
 }
 
 function compartilhar() {
-  const url = window.location.href;
+  const url = window.location.href.split('?')[0];
   const txt = encodeURIComponent('*CCB Adm Vinhedo – Requisição de Compras*\n\nAcesse o app:\n' + url);
+  window.open('https://wa.me/?text=' + txt, '_blank');
+}
+
+function enviarLinkAssinatura(idx) {
+  const r = DB.requisicoes[idx];
+  // Monta URL com parâmetro ?assinar=ID da requisição
+  const base = window.location.href.split('?')[0];
+  const url  = base + '?assinar=' + r.id;
+  const campos = [
+    !r.sigMin ? 'Ministério Local' : null,
+    !r.sigTec ? 'Aprovação Técnica' : null,
+    !r.sigMan ? 'Manutenção' : null,
+  ].filter(Boolean).join(', ');
+  const pendentes = campos ? `\n_Pendente: ${campos}_` : '\n_Todas assinaturas concluídas_ ✅';
+  const txt = encodeURIComponent(
+    `*CCB Adm Vinhedo – Assinatura Pendente*\n\n` +
+    `Requisição *Nº ${fN(r.num)}*\n` +
+    `Igreja: ${r.igreja||'—'}\n` +
+    `Solicitante: ${r.solicitante||'—'}${pendentes}\n\n` +
+    `Toque no link para assinar:\n${url}`
+  );
   window.open('https://wa.me/?text=' + txt, '_blank');
 }
 
@@ -1227,7 +1249,21 @@ function docHTML(d) {
 window.addEventListener('load', () => {
   $('fData').value = d3();
   syncEmpty();
-  carregar();
+  carregar().then(() => {
+    // Verifica se há parâmetro ?assinar=ID na URL
+    const params = new URLSearchParams(window.location.search);
+    const reqId  = params.get('assinar');
+    if (reqId) {
+      const idx = DB.requisicoes.findIndex(r => String(r.id) === String(reqId));
+      if (idx !== -1) {
+        // Navega para listagem e abre modal de assinatura
+        goTo('lista', $('bn-lista'));
+        setTimeout(() => assinarReq(idx), 400);
+      } else {
+        showToast('⚠️ Requisição não encontrada. Sincronizando...', 4000);
+      }
+    }
+  });
   // Auto-sincronizar a cada 60 segundos
   setInterval(() => carregar(), 60000);
 });
