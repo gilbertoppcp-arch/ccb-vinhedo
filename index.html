@@ -1167,6 +1167,7 @@ function assinarReq(idx) {
         <div style="background:var(--navy2);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;">
           <span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;">${a.label} ✅</span>
           <button onclick="reeditarAssinatura('${a.key}',${idx})" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">✏️ Reeditar</button>
+          <button onclick="excluirAssinatura('${a.key}',${idx})" style="background:rgba(192,57,43,.35);border:1px solid rgba(255,100,80,.4);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">🗑</button>
         </div>
         <div style="padding:8px 12px;display:flex;align-items:center;gap:10px;background:#fafaf8;">
           <img src="${a.sig}" style="height:36px;object-fit:contain;">
@@ -1200,23 +1201,44 @@ function assinarReq(idx) {
 }
 
 function reeditarAssinatura(campo, idx) {
-  // Pré-seleciona o campo no select e coloca o nome já existente
   const r = DB.requisicoes[idx];
   const nomes = {min: r.nomeMin, tec: r.nomeTec, man: r.nomeMan};
+  const labels = {min:'Ministério Local', tec:'Aprovação Técnica', man:'Manutenção'};
   const sel = $('assField');
   if (sel) {
-    // Garante que a option existe e está habilitada
-    for (let opt of sel.options) {
-      if (opt.value === campo) { opt.disabled = false; opt.selected = true; }
+    // Remove option existente do campo se houver
+    for (let i=sel.options.length-1; i>=0; i--) {
+      if (sel.options[i].value===campo) sel.remove(i);
     }
+    // Adiciona option habilitada no topo e seleciona
+    const opt = document.createElement('option');
+    opt.value = campo;
+    opt.textContent = labels[campo] + ' (reeditar)';
+    sel.insertBefore(opt, sel.firstChild);
+    sel.value = campo;
   }
   const inp = $('assNome');
-  if (inp) inp.value = nomes[campo] || '';
-  // Limpa canvas para redesenhar
+  if (inp) { inp.value = nomes[campo] || ''; inp.focus(); }
   limparCanvas();
-  // Scroll para o canvas
   const sw = document.querySelector('.sig-wrap');
-  if (sw) sw.scrollIntoView({behavior:'smooth', block:'center'});
+  if (sw) setTimeout(() => sw.scrollIntoView({behavior:'smooth', block:'center'}), 100);
+}
+
+function excluirAssinatura(campo, idx) {
+  if (!confirm('Excluir esta assinatura?')) return;
+  const r = DB.requisicoes[idx];
+  if (campo==='min') { r.sigMin=null; r.nomeMin=''; }
+  else if (campo==='tec') { r.sigTec=null; r.nomeTec=''; }
+  else if (campo==='man') { r.sigMan=null; r.nomeMan=''; }
+  salvarLocal();
+  showToast('⏳ Removendo assinatura...');
+  clearTimeout(_debTimer);
+  const payload = { requisicoes: DB.requisicoes, solicitantes: DB.solicitantes, itens: DB.itens, reqCounter: DB.counter, counter: DB.counter };
+  fetch(FS_DOC, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({fields:{dados:{stringValue:JSON.stringify(payload)}}}) })
+    .then(r => { if(!r.ok) throw new Error(); setDot('ok'); showToast('✅ Assinatura removida!'); })
+    .catch(() => { setDot('off'); showToast('⚠️ Removido localmente.'); });
+  // Reabrir o modal atualizado
+  assinarReq(idx);
 }
 
 function toggleItensReq() {
