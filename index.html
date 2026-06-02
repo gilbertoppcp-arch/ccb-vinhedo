@@ -997,10 +997,8 @@ function renderLista() {
         <div class="rc-meta">⛪ ${r.igreja||'—'} · 📂 ${r.categoria||'—'}<br>👤 ${r.solicitante||'—'}</div>
         <div class="rc-val">${fM(tot)}</div>
         <div class="rc-actions">
-          <button class="btn btn-secondary btn-sm" onclick="verReq(${realIdx})">👁 Ver</button>
           <button class="btn btn-primary btn-sm" onclick="abrirNomes(${realIdx})">📝 Nomes · PDF</button>
           <button class="btn btn-secondary btn-sm" onclick="assinarReq(${realIdx})">✍️ Assinar</button>
-          <button class="btn btn-gold btn-sm" onclick="enviarLinkAssinatura(${realIdx})" title="Enviar link para assinar">📲 Link Assinar</button>
           <button class="btn btn-secondary btn-sm" onclick="editarReq(${realIdx})">✏️ Editar</button>
           <button class="btn btn-danger btn-sm" onclick="excluirReq(${realIdx})">🗑</button>
         </div>
@@ -1103,10 +1101,37 @@ let assIdx = null, assEmpty = true;
 function assinarReq(idx) {
   assIdx = idx;
   const r = DB.requisicoes[idx];
+  const tot = (r.itens||[]).reduce((s,it)=>s+it.qtd*it.custo,0);
+
+  // Mini-resumo dos itens para visualização
+  const itensHTML = (r.itens||[]).map((it,i)=>`
+    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--cream2);font-size:12px;">
+      <span style="flex:1;color:var(--text);">${i+1}. ${it.desc||'—'} <span style="color:var(--text3)">${it.und||''}</span></span>
+      <span style="color:var(--text2);white-space:nowrap;margin-left:8px;">x${it.qtd} = ${fM(it.qtd*it.custo)}</span>
+    </div>`).join('');
+
   $('bodyAssinar').innerHTML = `
-    <div style="background:var(--cream);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--navy2);">
+    <!-- INFO DA REQ -->
+    <div style="background:var(--cream);border-radius:var(--r);padding:10px 12px;margin-bottom:10px;font-size:13px;color:var(--navy2);">
       <strong>${fN(r.num)}</strong> · ${r.igreja||'—'} · ${r.solicitante||'—'}
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">📅 ${fD(r.data)} · 📂 ${r.categoria||'—'}</div>
     </div>
+
+    <!-- BOTÕES: VER ITENS + ENVIAR LINK -->
+    <div style="display:flex;gap:7px;margin-bottom:12px;">
+      <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="toggleItensReq()">👁 Ver Itens</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="enviarLinkAssinatura(${idx})">📲 Enviar para Assinar</button>
+    </div>
+
+    <!-- ITENS COLAPSÁVEIS -->
+    <div id="itensReqWrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;margin-bottom:12px;">
+      ${itensHTML}
+      <div style="display:flex;justify-content:space-between;padding-top:7px;margin-top:4px;font-weight:700;font-size:13px;">
+        <span>Total</span><span>${fM(tot)}</span>
+      </div>
+    </div>
+
+    <!-- CAMPO + NOME + ASSINATURA -->
     <div class="field"><label>Campo</label>
       <select id="assField" class="finput">
         <option value="min"${r.sigMin?' disabled':''}>Ministério Local${r.sigMin?' ✅':''}</option>
@@ -1123,6 +1148,16 @@ function assinarReq(idx) {
     </div>`;
   openOv('ovAssinar');
   setTimeout(initCanvas, 100);
+}
+
+function toggleItensReq() {
+  const w = $('itensReqWrap');
+  if (!w) return;
+  const aberto = w.style.display !== 'none';
+  w.style.display = aberto ? 'none' : 'block';
+  // Atualiza texto do botão
+  const btn = w.previousElementSibling?.querySelector('button:first-child');
+  if (btn) btn.textContent = aberto ? '👁 Ver Itens' : '🙈 Ocultar Itens';
 }
 
 function initCanvas() {
