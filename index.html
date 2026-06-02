@@ -1117,10 +1117,10 @@ function assinarReq(idx) {
       <div style="font-size:11px;color:var(--text3);margin-top:2px;">📅 ${fD(r.data)} · 📂 ${r.categoria||'—'}</div>
     </div>
 
-    <!-- BOTÕES: VER ITENS + ENVIAR LINK -->
+    <!-- BOTÕES: VER ITENS + ENVIAR LINK (só para o solicitante) -->
     <div style="display:flex;gap:7px;margin-bottom:12px;">
       <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="toggleItensReq()">👁 Ver Itens</button>
-      <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="enviarLinkAssinatura(${idx})">📲 Enviar para Assinar</button>
+      ${!window._modoAssinante ? `<button class="btn btn-secondary btn-sm" style="flex:1;" onclick="enviarLinkAssinatura(${idx})">📲 Enviar para Assinar</button>` : ''}
     </div>
 
     <!-- ITENS COLAPSÁVEIS -->
@@ -1289,9 +1289,9 @@ window.addEventListener('load', () => {
     const params = new URLSearchParams(window.location.search);
     const reqId  = params.get('assinar');
     if (reqId) {
+      window._modoAssinante = true; // veio pelo link — é o assinante, não o solicitante
       const idx = DB.requisicoes.findIndex(r => String(r.id) === String(reqId));
       if (idx !== -1) {
-        // Navega para listagem e abre modal de assinatura
         goTo('lista', $('bn-lista'));
         setTimeout(() => assinarReq(idx), 400);
       } else {
@@ -1299,7 +1299,6 @@ window.addEventListener('load', () => {
       }
     }
   });
-  // Auto-sincronizar a cada 60 segundos
   setInterval(() => carregar(), 60000);
 });
 </script>
