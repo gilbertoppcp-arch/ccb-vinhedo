@@ -1025,17 +1025,25 @@ function compartilhar() {
 
 function enviarLinkAssinatura(idx) {
   const r = DB.requisicoes[idx];
-  // Monta URL com parâmetro ?assinar=ID da requisição
+  // Lê o nome e campo já preenchidos no modal
+  const nomeAtual  = ($('assNome')?.value || '').trim();
+  const campoAtual = $('assField')?.value || 'min';
+
   const base = window.location.href.split('?')[0];
-  const url  = base + '?assinar=' + r.id;
+  // Inclui nome e campo na URL para pré-preencher para o assinante
+  let url = base + '?assinar=' + r.id;
+  if (nomeAtual)  url += '&nome='  + encodeURIComponent(nomeAtual);
+  if (campoAtual) url += '&campo=' + encodeURIComponent(campoAtual);
+
   const campos = [
     !r.sigMin ? 'Ministério Local' : null,
     !r.sigTec ? 'Aprovação Técnica' : null,
     !r.sigMan ? 'Manutenção' : null,
   ].filter(Boolean).join(', ');
   const pendentes = campos ? `\n_Pendente: ${campos}_` : '\n_Todas assinaturas concluídas_ ✅';
+  const saudacao  = nomeAtual ? `Olá, *${nomeAtual}*!\n\n` : '';
   const txt = encodeURIComponent(
-    `*CCB Adm Vinhedo – Assinatura Pendente*\n\n` +
+    `${saudacao}*CCB Adm Vinhedo – Assinatura Pendente*\n\n` +
     `Requisição *Nº ${fN(r.num)}*\n` +
     `Igreja: ${r.igreja||'—'}\n` +
     `Solicitante: ${r.solicitante||'—'}${pendentes}\n\n` +
@@ -1147,7 +1155,12 @@ function assinarReq(idx) {
       <div class="sig-acts"><button class="sig-clr" onclick="limparCanvas()">Limpar</button></div>
     </div>`;
   openOv('ovAssinar');
-  setTimeout(initCanvas, 100);
+  setTimeout(() => {
+    initCanvas();
+    // Pré-preencher nome e campo vindos da URL (modo assinante)
+    if (window._nomeUrl)  { const el=$('assNome');  if(el) el.value=window._nomeUrl; }
+    if (window._campoUrl) { const el=$('assField'); if(el) el.value=window._campoUrl; }
+  }, 100);
 }
 
 function toggleItensReq() {
@@ -1289,7 +1302,9 @@ window.addEventListener('load', () => {
     const params = new URLSearchParams(window.location.search);
     const reqId  = params.get('assinar');
     if (reqId) {
-      window._modoAssinante = true; // veio pelo link — é o assinante, não o solicitante
+      window._modoAssinante = true;
+      window._nomeUrl  = params.get('nome')  || '';
+      window._campoUrl = params.get('campo') || '';
       const idx = DB.requisicoes.findIndex(r => String(r.id) === String(reqId));
       if (idx !== -1) {
         goTo('lista', $('bn-lista'));
