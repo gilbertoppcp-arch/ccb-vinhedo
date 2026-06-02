@@ -1157,12 +1157,30 @@ function assinarReq(idx) {
       </div>
     </div>
 
-    <!-- CAMPO + NOME + ASSINATURA -->
-    <div class="field"><label>Campo</label>
+    <!-- ASSINATURAS JÁ COLETADAS -->
+    ${[
+      {key:'min', label:'Ministério Local',  sig:r.sigMin, nome:r.nomeMin},
+      {key:'tec', label:'Aprovação Técnica', sig:r.sigTec, nome:r.nomeTec},
+      {key:'man', label:'Manutenção / Adm',  sig:r.sigMan, nome:r.nomeMan},
+    ].filter(a=>a.sig).map(a=>`
+      <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px;">
+        <div style="background:var(--navy2);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;">${a.label} ✅</span>
+          <button onclick="reeditarAssinatura('${a.key}',${idx})" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">✏️ Reeditar</button>
+        </div>
+        <div style="padding:8px 12px;display:flex;align-items:center;gap:10px;background:#fafaf8;">
+          <img src="${a.sig}" style="height:36px;object-fit:contain;">
+          <span style="font-size:12px;color:var(--navy2);font-weight:600;">${a.nome||''}</span>
+        </div>
+      </div>`).join('')}
+
+    <!-- NOVO CAMPO PARA ASSINAR -->
+    <div class="field" style="margin-top:4px;"><label>Novo Campo</label>
       <select id="assField" class="finput">
-        <option value="min"${r.sigMin?' disabled':''}>Ministério Local${r.sigMin?' ✅':''}</option>
-        <option value="tec"${r.sigTec?' disabled':''}>Área Técnica${r.sigTec?' ✅':''}</option>
-        <option value="man"${r.sigMan?' disabled':''}>Manutenção${r.sigMan?' ✅':''}</option>
+        ${!r.sigMin ? `<option value="min">Ministério Local</option>` : ''}
+        ${!r.sigTec ? `<option value="tec">Aprovação Técnica</option>` : ''}
+        ${!r.sigMan ? `<option value="man">Manutenção</option>` : ''}
+        ${r.sigMin&&r.sigTec&&r.sigMan ? `<option value="" disabled>Todos assinados ✅</option>` : ''}
       </select>
     </div>
     <div class="field"><label>Nome</label><input type="text" class="finput" id="assNome" placeholder="Nome completo"></div>
@@ -1179,6 +1197,26 @@ function assinarReq(idx) {
     if (window._nomeUrl)  { const el=$('assNome');  if(el) el.value=window._nomeUrl; }
     if (window._campoUrl) { const el=$('assField'); if(el) el.value=window._campoUrl; }
   }, 100);
+}
+
+function reeditarAssinatura(campo, idx) {
+  // Pré-seleciona o campo no select e coloca o nome já existente
+  const r = DB.requisicoes[idx];
+  const nomes = {min: r.nomeMin, tec: r.nomeTec, man: r.nomeMan};
+  const sel = $('assField');
+  if (sel) {
+    // Garante que a option existe e está habilitada
+    for (let opt of sel.options) {
+      if (opt.value === campo) { opt.disabled = false; opt.selected = true; }
+    }
+  }
+  const inp = $('assNome');
+  if (inp) inp.value = nomes[campo] || '';
+  // Limpa canvas para redesenhar
+  limparCanvas();
+  // Scroll para o canvas
+  const sw = document.querySelector('.sig-wrap');
+  if (sw) sw.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 function toggleItensReq() {
