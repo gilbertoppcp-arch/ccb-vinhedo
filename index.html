@@ -2224,7 +2224,12 @@ function confirmarAssinatura() {
   if (field==='min'){r.sigMin=img;r.nomeMin=nome;}
   else if(field==='tec'){r.sigTec=img;r.nomeTec=nome;}
   else if(field==='man'){r.sigMan=img;r.nomeMan=nome;}
-  r.dataUltAssinatura = new Date().toISOString().split('T')[0];
+  const hoje = new Date().toISOString().split('T')[0];
+  r.dataUltAssinatura = hoje;
+  // Preencher data do campo assinado
+  if (field==='min') r.dataMin = hoje;
+  else if (field==='tec') r.dataTec = hoje;
+  else if (field==='man') r.dataMan = hoje;
 
   salvarLocal();
   fecharModalAssinar();
@@ -2281,8 +2286,8 @@ function gerarPDFReq(idx) {
     doc.setDrawColor(...PRETO); doc.setLineWidth(0.35);
     doc.rect(ML+2, my-3, 3.8, 3.8);
     if (chk) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...AZUL);
-      doc.text('✓', ML+2.5, my+0.5);
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...PRETO);
+      doc.text('X', ML+3, my+0.5);
     }
     doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...PRETO);
     doc.text(m, ML+8, my+0.3);
@@ -2298,8 +2303,8 @@ function gerarPDFReq(idx) {
     doc.setDrawColor(...PRETO); doc.setLineWidth(0.35);
     doc.rect(col2X+2, cy-3, 3.8, 3.8);
     if (chk) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...AZUL);
-      doc.text('✓', col2X+2.5, cy+0.5);
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...PRETO);
+      doc.text('X', col2X+3, cy+0.5);
     }
     doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...PRETO);
     doc.text(cat, col2X+8, cy+0.3);
@@ -2314,14 +2319,14 @@ function gerarPDFReq(idx) {
   doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...PRETO);
   doc.text('DATA DA SOLICITAÇÃO', col3CX, secY+6, {align:'center'});
   // Valor da data em azul com espaços: "04 / 06 / 2026"
+  doc.setDrawColor(...PRETO); doc.setLineWidth(0.4);
+  doc.line(col3X+3, secY+14.5, ML+PW-3, secY+14.5);
   if (d.dataSolicitacao) {
     const [y,m,dd] = d.dataSolicitacao.split('-');
     const dataFmt = `${dd} / ${m} / ${y}`;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...AZUL);
-    doc.text(dataFmt, col3CX, secY+13, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...PRETO);
+    doc.text(dataFmt, col3CX, secY+13.5, {align:'center'});
   }
-  doc.setDrawColor(...PRETO); doc.setLineWidth(0.4);
-  doc.line(col3X+3, secY+14.5, ML+PW-3, secY+14.5);
 
   // Nome do solicitante em azul
   if (d.nomeSolicitante) {
@@ -2361,11 +2366,11 @@ function gerarPDFReq(idx) {
     doc.rect(ML+cNum+cDesc,       ry, cUnd,  rowH);
     doc.rect(ML+cNum+cDesc+cUnd,  ry, cQtd,  rowH);
     // Número (preto, pequeno)
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(90,90,90);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90,90,90);
     doc.text(String(i+1), ML+cNum/2, ry+rowH/2+2, {align:'center'});
     // Dados em azul
     if (it && it.desc) {
-      doc.setTextColor(...PRETO); doc.setFontSize(7.5);
+      doc.setTextColor(...PRETO); doc.setFontSize(10);
       const descTxt = doc.splitTextToSize(it.desc, cDesc-3)[0];
       doc.text(descTxt, ML+cNum+2, ry+rowH/2+2);
       if (it.und) doc.text(it.und, ML+cNum+cDesc+cUnd/2, ry+rowH/2+2, {align:'center'});
@@ -2382,7 +2387,7 @@ function gerarPDFReq(idx) {
   doc.line(ML, obsY, ML+PW, obsY); // linha topo obs já vem da tabela
   doc.text('OBSERVAÇÃO:', ML+2, obsY+5);
   // Caixa interna de texto
-  const obsBoxY = obsY+6.5, obsBoxH = 18;
+  const obsBoxY = obsY+6.5, obsBoxH = 14;
   doc.setLineWidth(0.3);
   doc.rect(ML+1, obsBoxY, PW-2, obsBoxH);
   if (d.obs) {
@@ -2392,55 +2397,60 @@ function gerarPDFReq(idx) {
   }
 
   // ══ RODAPÉ — DENTRO da borda externa ══
-  // O rodapé começa logo após a caixa de observação, sem espaço
-  const rodY = obsBoxY+obsBoxH+1;
-  const rodH = MT+PH-rodY; // altura restante até a borda inferior
-  const colW = PW/3;
+  const rodY = obsBoxY + obsBoxH + 1;
+  const rodBot = MT + PH;
+  const rodH = rodBot - rodY;
+  const colW = PW / 3;
 
-  // Separadores verticais do rodapé
+  // Separadores verticais até a borda inferior
   doc.setDrawColor(...PRETO); doc.setLineWidth(0.25);
-  doc.line(ML+colW,   rodY, ML+colW,   MT+PH);
-  doc.line(ML+colW*2, rodY, ML+colW*2, MT+PH);
+  doc.line(ML+colW,   rodY, ML+colW,   rodBot);
+  doc.line(ML+colW*2, rodY, ML+colW*2, rodBot);
 
   const sigs = [
-    {l:'MINISTÉRIO LOCAL',  img:d.sigMin, n:d.nomeMin},
-    {l:'APROVAÇÃO TÉCNICA', img:d.sigTec, n:d.nomeTec},
-    {l:'APROVAÇÃO ADM',     img:d.sigMan, n:d.nomeMan},
+    {l:'MINISTÉRIO LOCAL',  img:d.sigMin, n:d.nomeMin, dataField:'dataMin'},
+    {l:'APROVAÇÃO TÉCNICA', img:d.sigTec, n:d.nomeTec, dataField:'dataTec'},
+    {l:'APROVAÇÃO ADM',     img:d.sigMan, n:d.nomeMan, dataField:'dataMan'},
   ];
 
   sigs.forEach((sg,i) => {
-    const sx  = ML+i*colW;
-    const ccx = sx+colW/2;
-    // Linha de assinatura a ~60% da altura do rodapé
-    const linhaY = rodY + rodH*0.5;
+    const sx  = ML + i*colW;
+    const ccx = sx + colW/2;
 
-    // Imagem da assinatura ACIMA da linha
+    // Ancoragem de baixo para cima — garante que tudo fica dentro da borda
+    const dataY  = rodBot - 3.5;
+    const labelY = rodBot - 8.5;
+    const nomeY  = rodBot - 14;
+    const linhaY = rodBot - 19;
+    const imgH   = 10, imgW = colW - 14;
+    const imgY   = linhaY - imgH - 1;
+
+    // Imagem da assinatura acima da linha
     if (sg.img) {
-      try {
-        const imgW=colW-14, imgH=11;
-        doc.addImage(sg.img,'JPEG', sx+7, linhaY-imgH-1, imgW, imgH);
-      } catch(e){}
+      try { doc.addImage(sg.img,'JPEG', sx+7, imgY, imgW, imgH); } catch(e){}
     }
 
-    // Linha de assinatura (curta)
+    // Linha de assinatura
     doc.setDrawColor(...PRETO); doc.setLineWidth(0.5);
-    doc.line(sx+8, linhaY, sx+colW-8, linhaY);
+    doc.line(sx+6, linhaY, sx+colW-6, linhaY);
 
-    // Nome abaixo em azul
+    // Nome do assinante
     if (sg.n) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...AZUL);
-      doc.text(sg.n, ccx, linhaY+4.5, {align:'center'});
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...PRETO);
+      doc.text(sg.n, ccx, nomeY, {align:'center'});
     }
 
-    // Label
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...PRETO);
-    doc.text(sg.l, ccx, linhaY+(sg.n?10:6), {align:'center'});
+    // Label (MINISTÉRIO LOCAL etc)
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...PRETO);
+    doc.text(sg.l, ccx, labelY, {align:'center'});
 
-    // DATA
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...PRETO);
-    doc.text('DATA ______/______/_________', ccx, linhaY+(sg.n?15:11), {align:'center'});
+    // DATA — automática se assinado
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...PRETO);
+    const dataVal = sg.dataField && d[sg.dataField]
+      ? 'DATA  ' + fD(d[sg.dataField])
+      : 'DATA ______/______/_________';
+    doc.text(dataVal, ccx, dataY, {align:'center'});
   });
-
   doc.save('Req_CCB_' + fN(d.num) + '.pdf');
   showToast('📄 PDF gerado!');
 }
