@@ -2285,10 +2285,10 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Sincroniza a cada 60s
   setInterval(() => carregarFirebase(), 60000);
-});
 
-// ===== INIT =====
-criarLinhas();
+  // Criar linhas da tabela após DOM pronto
+  criarLinhas();
+});
 </script>
 
 <!-- ===== MODAL LISTA DE REQUISIÇÕES ===== -->
