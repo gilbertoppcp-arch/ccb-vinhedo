@@ -1126,6 +1126,16 @@ function salvarNomesEPDF() {
 ══════════════════════════════════════ */
 let assIdx = null, assEmpty = true;
 
+/* Retorna true se o usuário atual pode editar/excluir o campo */
+function podeEditarAssinatura(campo) {
+  // Modo assinante (veio pelo link): só pode mexer no próprio campo
+  if (window._modoAssinante) {
+    return (window._campoUrl || '') === campo;
+  }
+  // Solicitante (acesso direto): pode editar tudo
+  return true;
+}
+
 function assinarReq(idx) {
   assIdx = idx;
   const r = DB.requisicoes[idx];
@@ -1164,13 +1174,12 @@ function assinarReq(idx) {
       {key:'tec', label:'Aprovação Técnica', sig:r.sigTec, nome:r.nomeTec},
       {key:'man', label:'Manutenção / Adm',  sig:r.sigMan, nome:r.nomeMan},
     ].filter(a=>a.sig).map(a=>{
-      // Assinante só pode reeditar/excluir o próprio campo (o que veio na URL)
-      const ehDele = !window._modoAssinante || (window._campoUrl === a.key);
+      const podEditar = podeEditarAssinatura(a.key);
       return `
       <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px;">
         <div style="background:var(--navy2);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;">
           <span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;">${a.label} ✅</span>
-          ${ehDele ? `
+          ${podEditar ? `
             <div style="display:flex;gap:5px;">
               <button onclick="reeditarAssinatura('${a.key}',${idx})" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">✏️ Reeditar</button>
               <button onclick="excluirAssinatura('${a.key}',${idx})" style="background:rgba(192,57,43,.35);border:1px solid rgba(255,100,80,.4);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">🗑</button>
