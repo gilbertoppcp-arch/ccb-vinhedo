@@ -2221,212 +2221,229 @@ function gerarPDFReq(idx) {
   const {jsPDF} = window.jspdf;
   const doc = new jsPDF('p','mm','a4');
 
-  // Cores
-  const PRETO  = [0,0,0];
-  const AZUL   = [0, 0, 180];    // azul caneta BIC nos dados preenchidos
-  const CINZA  = [100,100,100];
+  // A4: 210 x 297mm — margens
+  const ML = 12, MR = 12, MT = 10;
+  const PW = 210 - ML - MR; // 186mm largura útil
+  const PH = 297 - MT - 10; // altura útil
 
-  const setPreto = () => doc.setTextColor(...PRETO);
-  const setAzul  = () => doc.setTextColor(...AZUL);
-
-  // Dimensões A4
-  const ML=12, MR=12, MT=10;
-  const PW=210-ML-MR;  // 186mm
-
-  // ══ BORDA EXTERNA ══
+  // ══════════════════════════════════════
+  // BORDA EXTERNA
+  // ══════════════════════════════════════
   doc.setDrawColor(0); doc.setLineWidth(0.7);
-  doc.rect(ML, MT, PW, 270);
+  doc.rect(ML, MT, PW, PH);
 
-  // ══ CABEÇALHO com borda interna ══
+  // ══════════════════════════════════════
+  // CABEÇALHO — borda interna
+  // ══════════════════════════════════════
+  const hdrInnerX = ML+3, hdrInnerY = MT+3, hdrInnerW = PW-6, hdrInnerH = 16;
   doc.setLineWidth(0.5);
-  doc.rect(ML+3, MT+3, PW-6, 16);
-  doc.setFont('helvetica','bold'); doc.setFontSize(13); setPreto();
-  doc.text('CONGREGAÇÃO CRISTÃ NO BRASIL', ML+PW/2, MT+9.5, {align:'center'});
+  doc.rect(hdrInnerX, hdrInnerY, hdrInnerW, hdrInnerH);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(0);
+  doc.text('CONGREGAÇÃO CRISTÃ NO BRASIL', ML+PW/2, MT+9, {align:'center'});
   doc.setFont('helvetica','normal'); doc.setFontSize(8);
-  doc.text('REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO', ML+PW/2, MT+15.5, {align:'center'});
+  doc.text('REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO', ML+PW/2, MT+15, {align:'center'});
 
-  // ══ SEÇÃO MINISTÉRIOS / CATEGORIAS / SOLICITANTE ══
-  const secY   = MT+22;
-  const secH   = 34;
-  const secBot = secY+secH;
+  // ══════════════════════════════════════
+  // SEÇÃO MINISTÉRIOS / CATEGORIAS / SOLICITANTE
+  // começa após o cabeçalho com espaço
+  // ══════════════════════════════════════
+  const secY = MT + 22;   // topo da seção
+  const secH = 34;        // altura da seção
+  const secBot = secY + secH;
 
-  // linha inferior da seção
-  doc.setDrawColor(0); doc.setLineWidth(0.35);
+  // Linha inferior da seção (separa da tabela)
+  doc.setDrawColor(0); doc.setLineWidth(0.4);
   doc.line(ML, secBot, ML+PW, secBot);
 
-  // COL1: Ministérios
+  // ── COL 1: Ministérios (largura ~72mm) ──
   const col1W = 72;
-  const mins  = ['NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA',
-                  'RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'];
-  const minSp = secH / mins.length;
-  mins.forEach((m,i) => {
-    const my = secY + minSp*i + minSp*0.65;
-    const chk = (d.ministerios||[]).includes(m);
-    doc.setDrawColor(0); doc.setLineWidth(0.3);
-    doc.rect(ML+2, my-2.8, 3.5, 3.5);
-    if (chk) {
-      setAzul(); doc.setFont('helvetica','bold'); doc.setFontSize(8);
-      doc.text('X', ML+3.1, my+0.3);
+  const ministeriosAll = [
+    'NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA',
+    'RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'
+  ];
+  const minSpacing = secH / ministeriosAll.length;
+  ministeriosAll.forEach((m, i) => {
+    const my = secY + minSpacing * i + minSpacing * 0.65;
+    const checked = (d.ministerios||[]).includes(m);
+    // Checkbox 3.5x3.5mm
+    doc.setLineWidth(0.35); doc.rect(ML+2, my-2.8, 3.5, 3.5);
+    if (checked) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
+      doc.text('X', ML+3.2, my+0.2);
     }
-    setPreto(); doc.setFont('helvetica','normal'); doc.setFontSize(6.5);
-    doc.text(m, ML+7.5, my+0.3);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(0);
+    doc.text(m, ML+7.5, my+0.2);
   });
 
-  // separador col1|col2
-  const col2X = ML+col1W;
-  doc.setDrawColor(0); doc.setLineWidth(0.3);
+  // ── Separador col1/col2 (linha vertical) ──
+  const col2X = ML + col1W;
+  doc.setLineWidth(0.3);
   doc.line(col2X, secY, col2X, secBot);
 
-  // COL2: Categorias
+  // ── COL 2: Categorias (largura ~42mm) ──
   const col2W = 42;
-  const cats  = ['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'];
-  const catSp = secH / cats.length;
-  cats.forEach((cat,i) => {
-    const cy = secY + catSp*i + catSp*0.65;
-    const chk = (d.categorias||[]).includes(cat);
-    doc.setDrawColor(0); doc.setLineWidth(0.3);
-    doc.rect(col2X+2, cy-2.8, 3.5, 3.5);
-    if (chk) {
-      setAzul(); doc.setFont('helvetica','bold'); doc.setFontSize(8);
-      doc.text('X', col2X+3.1, cy+0.3);
+  const categoriasAll = ['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'];
+  const catSpacing = secH / categoriasAll.length;
+  categoriasAll.forEach((cat, i) => {
+    const cy = secY + catSpacing * i + catSpacing * 0.65;
+    const checked = (d.categorias||[]).includes(cat);
+    doc.setLineWidth(0.35); doc.rect(col2X+2, cy-2.8, 3.5, 3.5);
+    if (checked) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
+      doc.text('X', col2X+3.2, cy+0.2);
     }
-    setPreto(); doc.setFont('helvetica','normal'); doc.setFontSize(6.5);
-    doc.text(cat, col2X+7.5, cy+0.3);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(0);
+    doc.text(cat, col2X+7.5, cy+0.2);
   });
 
-  // separador col2|col3
-  const col3X = col2X+col2W;
-  doc.setDrawColor(0); doc.setLineWidth(0.3);
+  // ── Separador col2/col3 ──
+  const col3X = col2X + col2W;
+  doc.setLineWidth(0.3);
   doc.line(col3X, secY, col3X, secBot);
 
-  // COL3: Data + Solicitante
-  const col3W  = PW-col1W-col2W;
-  const col3CX = col3X+col3W/2;
+  // ── COL 3: Data + Solicitante ──
+  const col3W = PW - col1W - col2W;
+  const col3CX = col3X + col3W/2; // centro da coluna
 
-  // DATA DA SOLICITAÇÃO
-  setPreto(); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+  // DATA DA SOLICITAÇÃO — label negrito centralizado
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(0);
   doc.text('DATA DA SOLICITAÇÃO', col3CX, secY+5, {align:'center'});
 
-  // linha de data
-  const dataLinha = secY+13;
-  doc.setDrawColor(0); doc.setLineWidth(0.35);
+  // Linha para data
+  const dataLinha = secY + 13;
+  const dataStr = d.dataSolicitacao ? fD(d.dataSolicitacao) : '';
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  if (dataStr) doc.text(dataStr, col3CX, dataLinha-1, {align:'center'});
+  doc.setLineWidth(0.4);
   doc.line(col3X+4, dataLinha, ML+PW-4, dataLinha);
-  if (d.dataSolicitacao) {
-    setAzul(); doc.setFont('helvetica','normal'); doc.setFontSize(8);
-    doc.text(fD(d.dataSolicitacao), col3CX, dataLinha-1.5, {align:'center'});
-  }
 
-  // linha de nome
-  const nomeLinha = secY+24;
-  doc.setDrawColor(0); doc.setLineWidth(0.35);
+  // Linha para nome (mais abaixo)
+  const nomeLinha = secY + 24;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  if (d.nomeSolicitante) doc.text(d.nomeSolicitante, col3CX, nomeLinha-1, {align:'center'});
+  doc.setLineWidth(0.4);
   doc.line(col3X+4, nomeLinha, ML+PW-4, nomeLinha);
-  if (d.nomeSolicitante) {
-    setAzul(); doc.setFont('helvetica','normal'); doc.setFontSize(8);
-    doc.text(d.nomeSolicitante, col3CX, nomeLinha-1.5, {align:'center'});
-  }
 
-  // labels nome
-  setPreto(); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+  // Labels NOME DO SOLICITANTE
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
   doc.text('NOME DO SOLICITANTE', col3CX, nomeLinha+5, {align:'center'});
   doc.setFont('helvetica','normal'); doc.setFontSize(7);
   doc.text('(POR EXTENSO)', col3CX, nomeLinha+9, {align:'center'});
 
-  // ══ TABELA DE ITENS ══
+  // ══════════════════════════════════════
+  // TABELA DE ITENS
+  // ══════════════════════════════════════
   const tblY = secBot;
-  const cNum=14, cDesc=130, cUnd=22, cQtd=PW-14-130-22;
-  const rowH=6.2, hdrH=7.5;
-  const numLinhas=25;
+  const numLinhas = 25;
 
-  // Cabeçalho tabela
-  const tblCols=[{l:'ITEM',w:cNum},{l:'DESCRIÇÃO',w:cDesc},{l:'UND',w:cUnd},{l:'QNTD',w:cQtd}];
-  let cx=ML;
-  setPreto(); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
-  tblCols.forEach(col=>{
-    doc.setDrawColor(0); doc.setFillColor(0); doc.setLineWidth(0.4);
-    doc.rect(cx, tblY, col.w, hdrH, 'FD');
-    doc.setTextColor(255,255,255);
-    doc.text(col.l, cx+col.w/2, tblY+hdrH/2+2.5, {align:'center'});
-    cx+=col.w;
+  // Larguras das colunas (total = PW = 186)
+  const cNum  = 14;   // ITEM
+  const cDesc = 130;  // DESCRIÇÃO
+  const cUnd  = 22;   // UND
+  const cQtd  = PW - cNum - cDesc - cUnd; // QNTD (~20)
+  const rowH  = 6.2;
+  const hdrH  = 7.5;
+
+  // Cabeçalho da tabela
+  const cols = [{l:'ITEM',w:cNum},{l:'DESCRIÇÃO',w:cDesc},{l:'UND',w:cUnd},{l:'QNTD',w:cQtd}];
+  let cx = ML;
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(0);
+  cols.forEach(col => {
+    doc.setDrawColor(0); doc.setLineWidth(0.4);
+    doc.rect(cx, tblY, col.w, hdrH);
+    doc.text(col.l, cx + col.w/2, tblY + hdrH/2 + 2.5, {align:'center'});
+    cx += col.w;
   });
 
   // Linhas de itens
-  doc.setFont('helvetica','normal'); doc.setFontSize(7);
-  for(let i=0;i<numLinhas;i++){
-    const ry=tblY+hdrH+i*rowH;
-    const it=(d.itens||[])[i];
-    // bordas
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(0);
+  for (let i = 0; i < numLinhas; i++) {
+    const ry = tblY + hdrH + i * rowH;
+    const it = (d.itens||[])[i];
+
+    // Bordas das células
     doc.setDrawColor(180); doc.setLineWidth(0.2);
-    doc.rect(ML,ry,cNum,rowH);
-    doc.rect(ML+cNum,ry,cDesc,rowH);
-    doc.rect(ML+cNum+cDesc,ry,cUnd,rowH);
-    doc.rect(ML+cNum+cDesc+cUnd,ry,cQtd,rowH);
-    // número
-    doc.setTextColor(...CINZA); doc.setFontSize(6.5);
+    doc.rect(ML,            ry, cNum,  rowH);
+    doc.rect(ML+cNum,       ry, cDesc, rowH);
+    doc.rect(ML+cNum+cDesc, ry, cUnd,  rowH);
+    doc.rect(ML+cNum+cDesc+cUnd, ry, cQtd, rowH);
+
+    // Número da linha
+    doc.setTextColor(80); doc.setFontSize(7);
     doc.text(String(i+1), ML+cNum/2, ry+rowH/2+2, {align:'center'});
-    // dados em azul
-    if(it && it.desc){
-      setAzul(); doc.setFontSize(7);
-      const descTxt=doc.splitTextToSize(it.desc, cDesc-4)[0];
+
+    // Dados do item
+    if (it && it.desc) {
+      doc.setTextColor(0);
+      const descTxt = doc.splitTextToSize(it.desc, cDesc-4)[0];
       doc.text(descTxt, ML+cNum+2, ry+rowH/2+2);
-      if(it.und) doc.text(it.und, ML+cNum+cDesc+cUnd/2, ry+rowH/2+2, {align:'center'});
-      if(it.qtd) doc.text(String(it.qtd), ML+cNum+cDesc+cUnd+cQtd/2, ry+rowH/2+2, {align:'center'});
+      if (it.und) doc.text(it.und, ML+cNum+cDesc+cUnd/2, ry+rowH/2+2, {align:'center'});
+      if (it.qtd) doc.text(String(it.qtd), ML+cNum+cDesc+cUnd+cQtd/2, ry+rowH/2+2, {align:'center'});
     }
   }
 
-  // ══ OBSERVAÇÃO ══
-  const obsY=tblY+hdrH+numLinhas*rowH;
-  const obsH=20;
+  // ══════════════════════════════════════
+  // OBSERVAÇÃO
+  // ══════════════════════════════════════
+  const obsY = tblY + hdrH + numLinhas * rowH;
+  const obsH = 20;
   doc.setDrawColor(0); doc.setLineWidth(0.35);
   doc.rect(ML, obsY, PW, obsH);
-  setPreto(); doc.setFont('helvetica','bold'); doc.setFontSize(7);
+  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
   doc.text('OBSERVAÇÃO:', ML+2, obsY+4.5);
-  if(d.obs){
-    setAzul(); doc.setFont('helvetica','normal'); doc.setFontSize(7);
-    const obsLines=doc.splitTextToSize(d.obs, PW-8);
+  if (d.obs) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    const obsLines = doc.splitTextToSize(d.obs, PW-8);
     doc.text(obsLines, ML+2, obsY+9);
   }
 
-  // ══ RODAPÉ ASSINATURAS ══
-  // Fora da borda principal, abaixo da caixa de obs
-  const rodY  = obsY+obsH+10;  // espaço acima das linhas
-  const col3Wd = PW/3;
+  // ══════════════════════════════════════
+  // RODAPÉ — ASSINATURAS
+  // fora da borda externa, abaixo
+  // ══════════════════════════════════════
+  const rodY = obsY + obsH + 8;
+  const col3Wd = PW / 3;
 
-  const sigs=[
+  const sigs = [
     {l:'MINISTÉRIO LOCAL',  img:d.sigMin, n:d.nomeMin},
     {l:'APROVAÇÃO TÉCNICA', img:d.sigTec, n:d.nomeTec},
     {l:'APROVAÇÃO ADM',     img:d.sigMan, n:d.nomeMan},
   ];
 
-  sigs.forEach((sg,i)=>{
-    const sx  = ML + i*col3Wd;
-    const cw  = col3Wd;
-    const cx2 = sx+cw/2;
+  sigs.forEach((sg, i) => {
+    const sx = ML + i * col3Wd;
+    const cw = col3Wd;
+    const cx2 = sx + cw/2;
+    const linhaY = rodY + 10;
 
-    // imagem de assinatura ACIMA da linha
-    if(sg.img){
-      try{ doc.addImage(sg.img,'JPEG', sx+4, rodY-13, cw-8, 12); }catch(e){}
+    // Imagem da assinatura ACIMA da linha
+    if (sg.img) {
+      try {
+        doc.addImage(sg.img,'JPEG', sx+4, linhaY-13, cw-8, 12);
+      } catch(e){}
     }
 
-    // linha de assinatura — curta, sem tocar nas laterais
+    // Linha de assinatura
     doc.setDrawColor(0); doc.setLineWidth(0.5);
-    doc.line(sx+4, rodY, sx+cw-4, rodY);
+    doc.line(sx+4, linhaY, sx+cw-4, linhaY);
 
-    // nome do assinante (em azul, negrito)
-    if(sg.n){
-      setAzul(); doc.setFont('helvetica','bold'); doc.setFontSize(7);
-      doc.text(sg.n, cx2, rodY+4, {align:'center'});
+    // Nome do assinante abaixo da linha
+    if (sg.n) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
+      doc.text(sg.n, cx2, linhaY+4, {align:'center'});
     }
 
-    // label (preto, maiúsculo)
-    setPreto(); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
-    doc.text(sg.l, cx2, rodY+9, {align:'center'});
+    // Label (MINISTÉRIO LOCAL etc)
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(0);
+    doc.text(sg.l, cx2, linhaY+9, {align:'center'});
 
     // DATA
     doc.setFont('helvetica','normal'); doc.setFontSize(7);
-    doc.text('DATA ______/______/_________', cx2, rodY+14, {align:'center'});
+    doc.text('DATA ______/______/_________', cx2, linhaY+14, {align:'center'});
   });
 
-  doc.save('Req_CCB_'+fN(d.num)+'.pdf');
+  doc.save('Req_CCB_' + fN(d.num) + '.pdf');
   showToast('📄 PDF gerado!');
 }
 
