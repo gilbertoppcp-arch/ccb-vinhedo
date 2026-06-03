@@ -1159,23 +1159,29 @@ function assinarReq(idx) {
       </div>
     </div>
 
-    <!-- ASSINATURAS JÁ COLETADAS -->
     ${[
       {key:'min', label:'Ministério Local',  sig:r.sigMin, nome:r.nomeMin},
       {key:'tec', label:'Aprovação Técnica', sig:r.sigTec, nome:r.nomeTec},
       {key:'man', label:'Manutenção / Adm',  sig:r.sigMan, nome:r.nomeMan},
-    ].filter(a=>a.sig).map(a=>`
+    ].filter(a=>a.sig).map(a=>{
+      // Assinante só pode reeditar/excluir o próprio campo (o que veio na URL)
+      const ehDele = !window._modoAssinante || (window._campoUrl === a.key);
+      return `
       <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px;">
         <div style="background:var(--navy2);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;">
           <span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;">${a.label} ✅</span>
-          <button onclick="reeditarAssinatura('${a.key}',${idx})" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">✏️ Reeditar</button>
-          <button onclick="excluirAssinatura('${a.key}',${idx})" style="background:rgba(192,57,43,.35);border:1px solid rgba(255,100,80,.4);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">🗑</button>
+          ${ehDele ? `
+            <div style="display:flex;gap:5px;">
+              <button onclick="reeditarAssinatura('${a.key}',${idx})" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">✏️ Reeditar</button>
+              <button onclick="excluirAssinatura('${a.key}',${idx})" style="background:rgba(192,57,43,.35);border:1px solid rgba(255,100,80,.4);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">🗑</button>
+            </div>` : `<span style="font-size:10px;color:rgba(255,255,255,.4);">✅ Assinado</span>`}
         </div>
         <div style="padding:8px 12px;display:flex;align-items:center;gap:10px;background:#fafaf8;">
           <img src="${a.sig}" style="height:36px;object-fit:contain;">
           <span style="font-size:12px;color:var(--navy2);font-weight:600;">${a.nome||''}</span>
         </div>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
 
     <!-- NOVO CAMPO PARA ASSINAR -->
     <div class="field" style="margin-top:4px;"><label>Novo Campo</label>
