@@ -1887,7 +1887,7 @@ function fD(v) { if(!v) return '—'; const [y,m,d]=v.split('-'); return `${d}/$
 
 // ===== COMPARTILHAR =====
 function compartilharApp() {
-  const url = window.location.href.split('?')[0];
+  const url = 'https://gilbertoppcp-arch.github.io/ccb-vinhedo/';
   const txt = encodeURIComponent('*CCB Adm Vinhedo – Requisição de Compras*\n\nAcesse o formulário:\n' + url);
   window.open('https://wa.me/?text=' + txt, '_blank');
 }
@@ -1991,7 +1991,7 @@ function carregarReqNoForm(idx) {
 // ===== ENVIAR LINK ASSINATURA =====
 function enviarLinkAssinatura(idx) {
   const r = DB.requisicoes[idx];
-  const base = window.location.href.split('?')[0];
+  const base = 'https://gilbertoppcp-arch.github.io/ccb-vinhedo/';
   const campos = [
     !r.sigMin ? 'Ministério Local' : null,
     !r.sigTec ? 'Aprovação Técnica' : null,
