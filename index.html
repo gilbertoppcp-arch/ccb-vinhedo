@@ -29,8 +29,8 @@
     top: 0;
     z-index: 200;
     background: #f0f2f7;
-    padding-top: 24px;
-    padding-bottom: 6px;
+    padding: 16px 0 6px;
+    margin-bottom: 6px;
   }
 
   .editor-topbar {
@@ -637,37 +637,41 @@
 
 <!-- ===== INTERFACE DE EDIÇÃO ===== -->
 <div class="editor-wrapper no-print">
+
+  <!-- BLOCO FIXO: topbar + número -->
   <div class="editor-sticky">
-  <div class="editor-topbar">
-    <h1>📋 Requisição de Compras — Administração Vinhedo</h1>
-    <div class="btns">
-      <button class="btn btn-base" onclick="abrirBase()">Base de Itens</button>
-      <button class="btn" onclick="abrirListaReqs()">Requisições</button>
-      <button class="btn btn-clear" onclick="limparFormulario()">Limpar</button>
-      <button class="btn btn-print" onclick="salvarESalvar()">Salvar</button>
-      <button class="btn btn-print" onclick="imprimir()">Imprimir PDF</button>
-      <div style="display:flex;align-items:center;gap:5px;font-size:.75rem;color:rgba(255,255,255,.6);margin-left:4px;">
-        <div id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#6ee7b7;flex-shrink:0;"></div>
-        <span id="syncTxt">Verificando...</span>
+
+    <div class="editor-topbar">
+      <h1>📋 Requisição de Compras — Administração Vinhedo</h1>
+      <div class="btns">
+        <button class="btn btn-base" onclick="abrirBase()">Base de Itens</button>
+        <button class="btn" onclick="abrirListaReqs()">Requisições</button>
+        <button class="btn btn-clear" onclick="limparFormulario()">Limpar</button>
+        <button class="btn btn-print" onclick="salvarESalvar()">Salvar</button>
+        <button class="btn btn-print" onclick="imprimir()">Imprimir PDF</button>
+        <div style="display:flex;align-items:center;gap:5px;font-size:.75rem;color:rgba(255,255,255,.6);margin-left:4px;">
+          <div id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#6ee7b7;flex-shrink:0;"></div>
+          <span id="syncTxt">Verificando...</span>
+        </div>
       </div>
     </div>
-  </div>
-
-  <div class="editor-body">
 
     <!-- NÚMERO DA REQUISIÇÃO -->
     <div style="display:flex;align-items:center;justify-content:space-between;background:#1a3a6b;border-radius:0 0 8px 8px;padding:10px 18px;">
       <span style="color:rgba(255,255,255,.6);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Próximo Nº</span>
       <span id="numReqDisplay" style="color:#f6c94e;font-size:1.4rem;font-weight:800;font-family:monospace;letter-spacing:2px;">0001</span>
     </div>
+
   </div><!-- /editor-sticky -->
 
-    <!-- SEÇÃO SUPERIOR -->
+  <div class="editor-body">
+
+    <!-- SEÇÃO SUPERIOR -->    <!-- SEÇÃO SUPERIOR -->
     <div class="secao-topo">
 
       <!-- MINISTÉRIOS -->
       <div>
-        <div class="grupo-label">Ministério</div>
+        <div class="grupo-label">Igreja</div>
         <div class="ministerios-lista" id="ministeriosLista">
           <label><input type="checkbox" id="min0" value="NOVA VINHEDO"> Nova Vinhedo</label>
           <label><input type="checkbox" id="min1" value="JARDIM BELA VISTA"> Jardim Bela Vista</label>
@@ -2321,7 +2325,7 @@ function gerarPDFReq(idx) {
 
   // Nome do solicitante em azul
   if (d.nomeSolicitante) {
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...AZUL);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...PRETO);
     doc.text(d.nomeSolicitante, col3CX, secY+22, {align:'center'});
   }
   doc.setDrawColor(...PRETO); doc.setLineWidth(0.4);
@@ -2361,7 +2365,7 @@ function gerarPDFReq(idx) {
     doc.text(String(i+1), ML+cNum/2, ry+rowH/2+2, {align:'center'});
     // Dados em azul
     if (it && it.desc) {
-      doc.setTextColor(...AZUL); doc.setFontSize(7.5);
+      doc.setTextColor(...PRETO); doc.setFontSize(7.5);
       const descTxt = doc.splitTextToSize(it.desc, cDesc-3)[0];
       doc.text(descTxt, ML+cNum+2, ry+rowH/2+2);
       if (it.und) doc.text(it.und, ML+cNum+cDesc+cUnd/2, ry+rowH/2+2, {align:'center'});
@@ -2382,7 +2386,7 @@ function gerarPDFReq(idx) {
   doc.setLineWidth(0.3);
   doc.rect(ML+1, obsBoxY, PW-2, obsBoxH);
   if (d.obs) {
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...AZUL);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...PRETO);
     const obsLines = doc.splitTextToSize(d.obs, PW-6);
     doc.text(obsLines, ML+3, obsBoxY+5);
   }
