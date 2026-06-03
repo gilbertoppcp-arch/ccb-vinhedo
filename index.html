@@ -1502,7 +1502,8 @@ function carregarBase() {
   { desc: "Reparo Torneira Esfera 1/2\" (15mm)", und: "un" },
   { desc: "Reparo Torneira Esfera 3/4\" (20mm)", und: "un" },
   { desc: "Reparo Torneira Gaveta Macho 1/2\" (15mm)", und: "un" },
-  { desc: "Veda Rosca Torneira Teflon 18mm", und: "rolo" }
+  { desc: "Veda Rosca Torneira Teflon 18mm", und: "rolo" },
+  { desc: "Pilha AA Duracell", und: "un" }
 ];
 }
 
@@ -2360,7 +2361,7 @@ function gerarPDFReq(idx) {
   for (let i=0; i<25; i++) {
     const ry = tblY+hdrH+i*rowH;
     const it = (d.itens||[])[i];
-    doc.setDrawColor(...CINZA_LINHA); doc.setLineWidth(0.15);
+    doc.setDrawColor(80,80,80); doc.setLineWidth(0.4);
     doc.rect(ML,                  ry, cNum,  rowH);
     doc.rect(ML+cNum,             ry, cDesc, rowH);
     doc.rect(ML+cNum+cDesc,       ry, cUnd,  rowH);
@@ -2402,10 +2403,7 @@ function gerarPDFReq(idx) {
   const rodH = rodBot - rodY;
   const colW = PW / 3;
 
-  // Separadores verticais até a borda inferior
-  doc.setDrawColor(...PRETO); doc.setLineWidth(0.25);
-  doc.line(ML+colW,   rodY, ML+colW,   rodBot);
-  doc.line(ML+colW*2, rodY, ML+colW*2, rodBot);
+  // Sem separadores verticais no rodapé
 
   const sigs = [
     {l:'MINISTÉRIO LOCAL',  img:d.sigMin, n:d.nomeMin, dataField:'dataMin'},
