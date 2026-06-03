@@ -1042,13 +1042,13 @@ function enviarLinkAssinatura(idx) {
     !r.sigMan ? 'Manutenção' : null,
   ].filter(Boolean).join(', ');
   const pendentes = campos ? `\n_Pendente: ${campos}_` : '\n_Todas assinaturas concluídas_ ✅';
-  const saudacao  = nomeAtual ? `Olá, *${nomeAtual}*!\n\n` : '';
   const txt = encodeURIComponent(
-    `${saudacao}*CCB Adm Vinhedo – Assinatura Pendente*\n\n` +
+    `*CCB Adm Vinhedo – Assinatura Pendente*\n\n` +
     `Requisição *Nº ${fN(r.num)}*\n` +
     `Igreja: ${r.igreja||'—'}\n` +
     `Solicitante: ${r.solicitante||'—'}${pendentes}\n\n` +
-    `Toque no link para assinar:\n${url}`
+    `Toque no link para assinar:\n${url}\n\n` +
+    `_Ao assinar, você concorda com o armazenamento desta assinatura para fins de aprovação interna de compras da Congregação Cristã no Brasil — Adm Vinhedo. Lei LGPD nº 13.709/2018._`
   );
   window.open('https://wa.me/?text=' + txt, '_blank');
 }
