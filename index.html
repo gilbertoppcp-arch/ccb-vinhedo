@@ -2215,80 +2215,182 @@ function confirmarAssinatura() {
     .catch(() => { setDot('off'); showToast('⚠️ Salvo localmente. Sem conexão.'); });
 }
 
-// ===== GERAR PDF COM ASSINATURAS =====
+// ===== GERAR PDF IDÊNTICO AO FORMULÁRIO IMPRESSO =====
 function gerarPDFReq(idx) {
   const d = DB.requisicoes[idx];
   const {jsPDF} = window.jspdf;
   const doc = new jsPDF('p','mm','a4');
+  const L = 14, R = 196, W = R - L; // margens
 
-  // Cabeçalho
-  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(26,58,107);
-  doc.text('Congregação Cristã no Brasil',105,16,{align:'center'});
-  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(74,90,106);
-  doc.text('REQUISIÇÃO DE COMPRAS – ADMINISTRAÇÃO VINHEDO',105,22,{align:'center'});
-  doc.setDrawColor(26,58,107); doc.setLineWidth(.6); doc.line(14,25,196,25);
+  // ── BORDA EXTERNA ──
+  doc.setDrawColor(0); doc.setLineWidth(0.6);
+  doc.rect(L, 10, W, 277);
 
-  // Metadados
-  const metas = [
-    ['Nº', fN(d.num)],
-    ['Data', fD(d.dataSolicitacao)],
-    ['Ministério', (d.ministerios||[]).join(', ')||'—'],
-    ['Categoria', (d.categorias||[]).join(', ')||'—'],
-    ['Solicitante', d.nomeSolicitante||'—'],
-  ];
-  let mx = 14;
-  metas.forEach(([l,v]) => {
-    doc.setFontSize(7); doc.setTextColor(140,150,164); doc.text(l,mx,30);
-    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(26,40,55); doc.text(String(v),mx,35);
-    mx += 37; doc.setFont('helvetica','normal');
+  // ── CABEÇALHO com borda interna ──
+  doc.setLineWidth(0.4);
+  doc.rect(L+2, 12, W-4, 14);
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(0);
+  doc.text('CONGREGAÇÃO CRISTÃ NO BRASIL', 105, 18, {align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+  doc.text('REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO', 105, 23, {align:'center'});
+
+  // ── SEÇÃO MINISTÉRIOS / CATEGORIAS / SOLICITANTE ──
+  const secY = 26; const secH = 32;
+  doc.setLineWidth(0.3);
+  doc.line(L, secY+secH, R, secY+secH); // linha inferior da seção
+
+  // Ministérios (coluna 1)
+  const ministeriosAll = ['NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA','RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'];
+  doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+  ministeriosAll.forEach((m, i) => {
+    const my = secY + 5 + i * 4.2;
+    const checked = (d.ministerios||[]).includes(m);
+    doc.setLineWidth(0.3); doc.rect(L+2, my-2.5, 3.5, 3.5);
+    if (checked) { doc.setFont('helvetica','bold'); doc.text('✓', L+2.4, my+0.5); doc.setFont('helvetica','normal'); }
+    doc.setFontSize(6); doc.text(m, L+7, my+0.5);
   });
 
-  // Tabela de itens
-  const rows = (d.itens||[]).map((it,i) => [i+1, it.desc||'—', it.und||'—', it.qtd||'—']);
-  doc.autoTable({
-    startY: 40,
-    head: [['Nº','Descrição','Unid.','Qtd']],
-    body: rows,
-    headStyles: {fillColor:[26,58,107], fontSize:8, textColor:255},
-    bodyStyles: {fontSize:8},
-    theme: 'striped',
-    alternateRowStyles: {fillColor:[240,242,247]},
+  // Separador vertical entre ministérios e categorias
+  const col2X = L + 68;
+  doc.setLineWidth(0.3); doc.line(col2X, secY, col2X, secY+secH);
+
+  // Categorias (coluna 2)
+  const categoriasAll = ['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'];
+  const catSpacing = secH / (categoriasAll.length + 1);
+  categoriasAll.forEach((cat, i) => {
+    const cy = secY + catSpacing * (i + 0.8);
+    const checked = (d.categorias||[]).includes(cat);
+    doc.setLineWidth(0.3); doc.rect(col2X+3, cy-2.5, 3.5, 3.5);
+    if (checked) { doc.setFont('helvetica','bold'); doc.text('✓', col2X+3.4, cy+0.5); doc.setFont('helvetica','normal'); }
+    doc.setFontSize(6.5); doc.text(cat, col2X+8, cy+0.5);
   });
 
-  // Observação
-  let sy = doc.lastAutoTable.finalY + 6;
-  if (d.obs) {
-    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(140,150,164);
-    doc.text('OBSERVAÇÃO:', 14, sy);
-    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
-    const lines = doc.splitTextToSize(d.obs, 180);
-    doc.text(lines, 14, sy+5);
-    sy += lines.length*4 + 10;
-  } else {
-    sy += 6;
+  // Separador vertical entre categorias e solicitante
+  const col3X = L + 118;
+  doc.setLineWidth(0.3); doc.line(col3X, secY, col3X, secY+secH);
+
+  // Solicitante / Data (coluna 3)
+  doc.setFont('helvetica','bold'); doc.setFontSize(7);
+  doc.text('DATA DA SOLICITAÇÃO', col3X+2, secY+6);
+  // Linha de data
+  const dataStr = d.dataSolicitacao ? fD(d.dataSolicitacao) : '___/___/______';
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+  doc.text(dataStr, col3X+10, secY+13);
+  doc.setLineWidth(0.3); doc.line(col3X+2, secY+14, R-2, secY+14);
+
+  // Nome solicitante
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+  doc.text(d.nomeSolicitante||'', col3X+2, secY+22);
+  doc.setLineWidth(0.3); doc.line(col3X+2, secY+23, R-2, secY+23);
+  doc.setFont('helvetica','bold'); doc.setFontSize(7);
+  doc.text('NOME DO SOLICITANTE', col3X+2+((R-2-(col3X+2))/2), secY+27, {align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(6.5);
+  doc.text('(POR EXTENSO)', col3X+2+((R-2-(col3X+2))/2), secY+30.5, {align:'center'});
+
+  // ── TABELA DE ITENS ──
+  const tableY = secY + secH;
+  const colWidths = { num:12, desc:130, und:22, qtd:18 };
+  const rowH = 6.5;
+  const numLinhas = 25;
+  const headerH = 7;
+
+  // Cabeçalho da tabela
+  doc.setFillColor(0,0,0); doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold'); doc.setFontSize(7);
+  // Células do cabeçalho
+  let cx = L;
+  [['ITEM',colWidths.num],['DESCRIÇÃO',colWidths.desc],['UND',colWidths.und],['QNTD',colWidths.qtd]].forEach(([lbl,w])=>{
+    doc.setFillColor(0); doc.rect(cx, tableY, w, headerH, 'FD');
+    doc.text(lbl, cx+w/2, tableY+4.5, {align:'center'});
+    cx += w;
+  });
+
+  // Linhas de itens
+  doc.setTextColor(0); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  for (let i = 0; i < numLinhas; i++) {
+    const iy = tableY + headerH + i * rowH;
+    const it = (d.itens||[])[i];
+    // Fundo alternado
+    if (i % 2 === 0) { doc.setFillColor(255,255,255); } else { doc.setFillColor(248,248,248); }
+    doc.rect(L, iy, W, rowH, 'F');
+    // Bordas
+    doc.setDrawColor(180); doc.setLineWidth(0.2);
+    doc.rect(L, iy, colWidths.num, rowH);
+    doc.rect(L+colWidths.num, iy, colWidths.desc, rowH);
+    doc.rect(L+colWidths.num+colWidths.desc, iy, colWidths.und, rowH);
+    doc.rect(L+colWidths.num+colWidths.desc+colWidths.und, iy, colWidths.qtd, rowH);
+    // Número
+    doc.setTextColor(100); doc.text(String(i+1), L+colWidths.num/2, iy+4.5, {align:'center'});
+    if (it && it.desc) {
+      doc.setTextColor(0);
+      // Descrição (truncar se muito longo)
+      const descTxt = doc.splitTextToSize(it.desc, colWidths.desc-3)[0];
+      doc.text(descTxt, L+colWidths.num+2, iy+4.5);
+      doc.text(it.und||'', L+colWidths.num+colWidths.desc+colWidths.und/2, iy+4.5, {align:'center'});
+      doc.text(String(it.qtd||''), L+colWidths.num+colWidths.desc+colWidths.und+colWidths.qtd/2, iy+4.5, {align:'center'});
+    }
+    doc.setDrawColor(0);
   }
 
-  // Linha separadora
-  doc.setDrawColor(26,58,107); doc.setLineWidth(.4); doc.line(14,sy,196,sy); sy += 8;
+  // ── OBSERVAÇÃO ──
+  const obsY = tableY + headerH + numLinhas * rowH;
+  const obsH = 22;
+  doc.setDrawColor(0); doc.setLineWidth(0.3);
+  doc.rect(L, obsY, W, obsH);
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(0);
+  doc.text('OBSERVAÇÃO:', L+2, obsY+4);
+  if (d.obs) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    const obsLines = doc.splitTextToSize(d.obs, W-6);
+    doc.text(obsLines, L+2, obsY+9);
+  }
 
-  // Assinaturas
+  // ── RODAPÉ ASSINATURAS ──
+  const rodY = obsY + obsH;
+  const rodH = 287 - rodY; // até o fim da borda externa
+  const colW3 = W / 3;
+
+  doc.setDrawColor(0); doc.setLineWidth(0.3);
+  // Separadores verticais
+  doc.line(L + colW3, rodY, L + colW3, rodY + rodH);
+  doc.line(L + colW3*2, rodY, L + colW3*2, rodY + rodH);
+
   const sigs = [
-    {l:'Ministério Local', img:d.sigMin, n:d.nomeMin},
-    {l:'Aprovação Técnica', img:d.sigTec, n:d.nomeTec},
-    {l:'Manutenção / Adm', img:d.sigMan, n:d.nomeMan},
+    {l:'MINISTÉRIO LOCAL',   img:d.sigMin, n:d.nomeMin,  dataField:'dataMin'},
+    {l:'APROVAÇÃO TÉCNICA',  img:d.sigTec, n:d.nomeTec,  dataField:'dataTec'},
+    {l:'APROVAÇÃO ADM',      img:d.sigMan, n:d.nomeMan,  dataField:'dataMan'},
   ];
-  sigs.forEach((sg,i) => {
-    const sx = 14 + i*61;
-    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(140,150,164);
-    doc.text(sg.l.toUpperCase(),sx,sy);
+
+  sigs.forEach((sg, i) => {
+    const sx = L + i * colW3;
+    const cw = colW3;
+    const sigLineY = rodY + rodH - 20;
+
+    // Linha de assinatura
+    doc.setLineWidth(0.4);
+    doc.line(sx+4, sigLineY, sx+cw-4, sigLineY);
+
+    // Imagem da assinatura (acima da linha)
     if (sg.img) {
-      try { doc.addImage(sg.img,'JPEG',sx,sy+3,57,14); } catch(e){}
-    } else {
-      doc.setDrawColor(120); doc.setLineWidth(.4); doc.line(sx,sy+17,sx+57,sy+17);
+      try {
+        const imgH = 14; const imgW = cw - 10;
+        doc.addImage(sg.img,'JPEG', sx+5, sigLineY-imgH-1, imgW, imgH);
+      } catch(e){}
     }
-    doc.setFont('helvetica', sg.n?'bold':'normal');
-    doc.setFontSize(8); doc.setTextColor(sg.n?26:160, sg.n?58:160, sg.n?107:160);
-    doc.text(sg.n||'', sx, sy+23);
+
+    // Nome do assinante
+    if (sg.n) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(0);
+      doc.text(sg.n, sx + cw/2, sigLineY+3.5, {align:'center'});
+    }
+
+    // Label
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
+    doc.text(sg.l, sx + cw/2, sigLineY+8, {align:'center'});
+
+    // DATA
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.text('DATA ______/______/_________', sx + cw/2, sigLineY+13, {align:'center'});
   });
 
   doc.save('Req_CCB_' + fN(d.num) + '.pdf');
