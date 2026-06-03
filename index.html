@@ -1,519 +1,1822 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>CCB Vinhedo · Requisições</title>
-<!-- Open Graph — pré-visualização no WhatsApp -->
-<meta property="og:title" content="CCB Adm Vinhedo – Assinatura Pendente">
-<meta property="og:description" content="Toque para visualizar e assinar a requisição de compras.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://gilbertoppcp-arch.github.io/ccb-vinhedo/">
-<meta name="description" content="Requisição de Compras — Congregação Cristã no Brasil, Administração Vinhedo.">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Requisição de Compras - Administração Vinhedo</title>
 <style>
-:root{
-  --navy:#0f1e33;--navy2:#1a3050;--gold:#c49a3c;--gold2:#d4aa52;
-  --cream:#f8f6f0;--cream2:#ede9e0;--white:#fff;
-  --text:#0f1e33;--text2:#4a5568;--text3:#8a96a4;
-  --border:rgba(15,30,51,.12);--danger:#c0392b;
-  --r:10px;--rg:14px;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;}
-body{font-family:'Instrument Sans',sans-serif;background:var(--cream);color:var(--text);-webkit-font-smoothing:antialiased;}
+  /* ===== VARIÁVEIS ===== */
+  :root {
+    --azul: #1a3a6b;
+    --azul-claro: #2563a8;
+    --cinza: #e8eaf0;
+    --borda: #555;
+    --fonte: 'Segoe UI', Arial, sans-serif;
+  }
 
-/* ── LAYOUT ── */
-#app{height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  /* ===== RESET ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--fonte); background: #f0f2f7; color: #222; }
 
-/* ── TOP BAR ── */
-.topbar{background:var(--navy);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.tb-logo{display:flex;align-items:center;gap:10px;}
-.tb-mark{width:42px;height:30px;border:2px solid var(--gold);border-radius:4px;display:flex;align-items:center;justify-content:center;position:relative;}
-.tb-mark::before{content:'';position:absolute;inset:2px;border:1px solid var(--gold);border-radius:2px;opacity:.4;}
-.tb-mark span{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;letter-spacing:2px;color:var(--gold);position:relative;}
-.tb-text{line-height:1.2;}
-.tb-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;}
-.tb-sub{font-size:10px;color:rgba(255,255,255,.4);}
-.tb-dot{width:8px;height:8px;border-radius:50%;background:#6ee7b7;}
+  /* ===== INTERFACE DE EDIÇÃO ===== */
+  .editor-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
 
-/* ── SCREENS ── */
-.screens{flex:1;overflow:hidden;position:relative;}
-.screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;background:var(--cream);}
-.screen.on{display:flex;}
-.spad{padding:12px 14px 90px;}
+  .editor-topbar {
+    background: var(--azul);
+    color: #fff;
+    padding: 14px 22px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .editor-topbar h1 {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+  }
+  .editor-topbar .btns {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+  .btn-print { background: #27ae60; color: #fff; }
+  .btn-clear { background: #c0392b; color: #fff; }
+  .btn-base { background: #f39c12; color: #fff; }
 
-/* ── BOTTOM NAV ── */
-.bnav{background:var(--white);border-top:1px solid var(--border);display:flex;flex-shrink:0;box-shadow:0 -2px 12px rgba(15,30,51,.07);padding-bottom:env(safe-area-inset-bottom,0);}
-.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-family:'Instrument Sans',sans-serif;}
-.bn.on{color:var(--navy);}
-.bn svg{width:22px;height:22px;stroke-width:1.6;stroke:currentColor;fill:none;}
-.bn span{font-size:10px;font-weight:500;}
-.bn.on span{font-weight:700;}
-.bn-wrap{position:relative;}
-.badge{position:absolute;top:-3px;right:-6px;background:var(--gold);color:var(--navy);font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+  .editor-body {
+    background: #fff;
+    border: 1px solid #dde2ef;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
 
-/* ── SEC HEADER ── */
-.sec-hdr{padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.sec-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--navy);}
-.sec-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+  /* SEÇÃO SUPERIOR */
+  .secao-topo {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
 
-/* ── CARD ── */
-.card{background:var(--white);border-radius:var(--rg);border:1px solid var(--border);overflow:hidden;margin-bottom:12px;}
-.card-hdr{background:var(--navy);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;}
-.card-hdr-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#fff;}
-.card-hdr-sub{font-size:10px;color:rgba(255,255,255,.4);}
-.card-body{padding:12px;}
+  .grupo-label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--azul);
+    letter-spacing: .6px;
+    margin-bottom: 6px;
+  }
 
-/* ── FORM ── */
-.field{margin-bottom:10px;}
-.field label{display:block;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
-.finput{width:100%;background:var(--cream);border:1.5px solid var(--cream2);border-radius:var(--r);padding:10px 12px;font-family:'Instrument Sans',sans-serif;font-size:15px;color:var(--text);outline:none;-webkit-appearance:none;appearance:none;}
-.finput:focus{border-color:var(--navy2);background:var(--white);}
-select.finput{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%238a96a4'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+  .ministerios-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ministerios-lista label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .84rem;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: background .1s;
+  }
+  .ministerios-lista label:hover { background: #f0f4ff; }
+  .ministerios-lista input[type=checkbox] {
+    width: 15px; height: 15px;
+    accent-color: var(--azul);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
 
-/* ── NUM ── */
-.num-box{background:var(--navy);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.num-lbl{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.6px;}
-.num-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--gold);}
+  .categorias-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .categorias-lista label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .84rem;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: background .1s;
+  }
+  .categorias-lista label:hover { background: #f0f4ff; }
+  .categorias-lista input[type=checkbox] {
+    width: 15px; height: 15px;
+    accent-color: var(--azul);
+    cursor: pointer;
+  }
 
-/* ── ITEM ROW ── */
-.item-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;}
-.item-card{background:var(--cream);border:1px solid var(--cream2);border-radius:var(--r);padding:9px 10px;}
-.ir1{display:flex;gap:6px;margin-bottom:5px;}
-.ir1 .ii{flex:1;background:var(--white);border:1px solid var(--cream2);border-radius:7px;padding:8px 10px;font-size:13px;font-family:'Instrument Sans',sans-serif;outline:none;color:var(--text);}
-.ir1 .ii-und{width:62px;flex-shrink:0;}
-.ir2{display:flex;gap:6px;align-items:center;}
-.ir2 .ii{flex:1;background:var(--white);border:1px solid var(--cream2);border-radius:7px;padding:8px 10px;font-size:13px;font-family:'Instrument Sans',sans-serif;outline:none;color:var(--text);}
-.it-total{font-size:12px;font-weight:600;color:var(--navy2);white-space:nowrap;min-width:72px;text-align:right;}
-.it-del{background:none;border:none;color:var(--danger);font-size:18px;cursor:pointer;padding:2px 5px;line-height:1;flex-shrink:0;}
+  .campo-solicitante {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .campo-solicitante input[type=text] {
+    border: 1.5px solid #c5cae3;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: .9rem;
+    outline: none;
+    transition: border-color .15s;
+    width: 100%;
+  }
+  .campo-solicitante input:focus { border-color: var(--azul-claro); }
+  .campo-data {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .campo-data input[type=date] {
+    border: 1.5px solid #c5cae3;
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: .88rem;
+    outline: none;
+    transition: border-color .15s;
+    width: 100%;
+  }
+  .campo-data input:focus { border-color: var(--azul-claro); }
 
-/* ── TOTAL ── */
-.total-bar{background:var(--navy);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.total-lbl{font-size:11px;color:rgba(255,255,255,.5);}
-.total-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--gold);}
+  /* TABELA DE ITENS */
+  .tabela-section .grupo-label { margin-bottom: 10px; }
 
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:11px 16px;border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;transition:opacity .15s;}
-.btn:active{opacity:.8;}
-.btn-primary{background:var(--navy);color:#fff;width:100%;}
-.btn-secondary{background:var(--cream);color:var(--navy);border:1.5px solid var(--cream2);}
-.btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(192,57,43,.3);}
-.btn-gold{background:var(--gold);color:var(--navy);}
-.btn-sm{padding:7px 11px;font-size:12px;min-height:34px;border-radius:7px;}
-.btn-add{background:transparent;border:1.5px dashed var(--cream2);color:var(--text3);font-family:'Instrument Sans',sans-serif;font-size:13px;width:100%;padding:10px;border-radius:var(--r);cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:5px;}
+  .tabela-itens {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .83rem;
+  }
+  .tabela-itens th {
+    background: var(--azul);
+    color: #fff;
+    padding: 8px 6px;
+    text-align: center;
+    font-weight: 700;
+    font-size: .78rem;
+    letter-spacing: .4px;
+  }
+  .tabela-itens th:nth-child(2) { text-align: left; padding-left: 10px; }
+  .tabela-itens td {
+    border: 1px solid #cdd3e8;
+    padding: 1px 4px;
+    vertical-align: middle;
+  }
+  .tabela-itens td:first-child {
+    text-align: center;
+    width: 46px;
+    color: #666;
+    font-size: .8rem;
+    background: #f7f8fc;
+    font-weight: 600;
+  }
+  .tabela-itens tr:hover td { background: #f0f4ff; }
+  .tabela-itens tr:hover td:first-child { background: #e6ecff; }
 
-/* ── REQ LIST ── */
-.req-card{background:var(--white);border-radius:var(--rg);border:1px solid var(--border);padding:13px 13px 11px;margin-bottom:10px;position:relative;overflow:hidden;}
-.req-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--cream2);}
-.req-card.signed::before{background:var(--gold);}
-.rc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px;}
-.rc-num{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--navy);}
-.rc-date{font-size:11px;color:var(--text3);margin-top:1px;}
-.rc-sigs{display:flex;gap:4px;}
-.sig-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--cream2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--text3);}
-.sig-dot.done{background:rgba(196,154,60,.15);border-color:var(--gold);color:var(--gold);}
-.rc-meta{font-size:12px;color:var(--text2);line-height:1.9;margin-bottom:6px;}
-.rc-val{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--navy);margin-bottom:9px;}
-.rc-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  /* AUTOCOMPLETE DESCRIÇÃO */
+  .descricao-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .descricao-wrap input {
+    width: 100%;
+    border: none;
+    padding: 5px 6px;
+    font-size: .83rem;
+    background: transparent;
+    outline: none;
+    font-family: var(--fonte);
+  }
+  .autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 999;
+    background: #fff;
+    border: 1.5px solid var(--azul-claro);
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    width: 420px;
+    max-width: 90vw;
+    box-shadow: 0 6px 20px rgba(0,0,0,.15);
+    display: none;
+  }
+  .autocomplete-dropdown.show { display: block; }
+  .autocomplete-item {
+    padding: 7px 12px;
+    cursor: pointer;
+    font-size: .82rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .autocomplete-item:hover, .autocomplete-item.active {
+    background: #e8f0ff;
+  }
+  .autocomplete-item .item-nome { flex: 1; }
+  .autocomplete-item .item-und {
+    font-size: .75rem;
+    color: #888;
+    background: #f0f0f0;
+    padding: 1px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .ac-highlight { color: var(--azul-claro); font-weight: 700; }
 
-/* ── CAD LIST ── */
-.cad-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
-.cad-row:last-child{border-bottom:none;}
-.cad-row.cad-editing{background:rgba(196,154,60,.08);border-radius:var(--r);padding:9px 8px;margin:0 -8px;}
-.cad-name{font-size:13px;color:var(--text);}
-.cad-sub{font-size:11px;color:var(--text3);}
-.cad-acts{display:flex;gap:5px;}
+  /* INPUTS UND / QNTD */
+  .input-und, .input-qntd {
+    width: 100%;
+    border: none;
+    padding: 5px 6px;
+    font-size: .83rem;
+    text-align: center;
+    background: transparent;
+    outline: none;
+    font-family: var(--fonte);
+  }
 
-/* ── INLINE ADD ── */
-.inline-add{display:flex;gap:6px;margin-bottom:8px;align-items:center;}
-.inline-add .finput{flex:1;padding:10px 12px;}
-.inline-add .und{width:64px;flex-shrink:0;}
+  /* OBSERVAÇÃO */
+  .obs-section textarea {
+    width: 100%;
+    border: 1.5px solid #c5cae3;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: .85rem;
+    font-family: var(--fonte);
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .obs-section textarea:focus { border-color: var(--azul-claro); }
 
-/* ── SHARE BANNER ── */
-.share-banner{background:var(--navy);border-radius:var(--rg);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.share-txt strong{display:block;color:#fff;font-size:13px;margin-bottom:2px;}
-.share-txt span{font-size:11px;color:rgba(255,255,255,.5);}
-.btn-wa{background:#25d366;color:#fff;border-radius:7px;padding:7px 12px;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;white-space:nowrap;}
-.btn-wa svg{width:15px;height:15px;fill:white;}
+  /* MODAL BASE DE DADOS */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 12px;
+    width: 700px;
+    max-width: 96vw;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    overflow: hidden;
+  }
+  .modal-header {
+    background: var(--azul);
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h2 { font-size: .95rem; }
+  .modal-close {
+    background: none; border: none; color: #fff;
+    font-size: 1.4rem; cursor: pointer; line-height: 1;
+  }
+  .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+  .modal-body .search-bar {
+    width: 100%; padding: 8px 12px;
+    border: 1.5px solid #c5cae3; border-radius: 6px;
+    font-size: .88rem; margin-bottom: 12px; outline: none;
+  }
+  .modal-body .search-bar:focus { border-color: var(--azul-claro); }
+  .base-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .base-table th {
+    background: var(--azul); color: #fff;
+    padding: 7px 10px; text-align: left; font-size: .78rem;
+  }
+  .base-table td { border-bottom: 1px solid #eee; padding: 6px 10px; }
+  .base-table tr:hover td { background: #f0f4ff; }
+  .base-table .btn-del {
+    background: #e74c3c; color: #fff;
+    border: none; padding: 3px 8px; border-radius: 4px;
+    font-size: .75rem; cursor: pointer;
+  }
+  .add-item-row {
+    display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+  }
+  .add-item-row input {
+    border: 1.5px solid #c5cae3; border-radius: 6px;
+    padding: 7px 10px; font-size: .85rem; outline: none;
+  }
+  .add-item-row input:focus { border-color: var(--azul-claro); }
+  .add-item-row input.inp-desc { flex: 1; min-width: 180px; }
+  .add-item-row input.inp-und { width: 80px; }
+  .add-item-row .btn-add-item {
+    background: var(--azul-claro); color: #fff;
+    border: none; border-radius: 6px;
+    padding: 7px 16px; font-size: .85rem;
+    font-weight: 600; cursor: pointer;
+  }
 
-/* ── MODAL ── */
-.ov{position:fixed;inset:0;background:rgba(10,20,35,.65);z-index:500;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;}
-.ov.on{opacity:1;pointer-events:all;}
-.modal{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:92vh;display:flex;flex-direction:column;transform:translateY(40px);transition:transform .3s cubic-bezier(.22,1,.36,1);}
-.ov.on .modal{transform:translateY(0);}
-.modal-handle{width:36px;height:4px;background:var(--cream2);border-radius:2px;margin:10px auto 0;flex-shrink:0;}
-.modal-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.modal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--navy);}
-.modal-close{background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer;padding:4px 8px;line-height:1;}
-.modal-body{overflow-y:auto;padding:14px;flex:1;-webkit-overflow-scrolling:touch;}
-.modal-foot{padding:11px 14px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;}
-.modal-foot .btn{flex:1;}
+  /* ===== PRINT STYLES — idêntico ao PDF ===== */
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 12mm 12mm 10mm 12mm;
+    }
 
-/* ── SIG ── */
-.sig-wrap{border:1.5px solid var(--cream2);border-radius:var(--r);overflow:hidden;margin-bottom:8px;}
-.sig-hdr{background:var(--navy2);padding:7px 12px;display:flex;justify-content:space-between;align-items:center;}
-.sig-hdr-t{font-size:10px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;}
-.sig-st{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.5);}
-.sig-st.ok{background:rgba(110,231,183,.25);color:#6ee7b7;}
-.sig-area{background:#fafaf8;position:relative;}
-.sig-area canvas{display:block;width:100%;height:90px;cursor:crosshair;touch-action:none;}
-.sig-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);pointer-events:none;transition:opacity .3s;}
-.sig-acts{background:var(--cream);padding:7px 10px;display:flex;gap:7px;}
-.sig-name{flex:1;background:var(--white);border:1px solid var(--cream2);border-radius:6px;padding:7px 10px;font-size:13px;font-family:'Instrument Sans',sans-serif;outline:none;}
-.sig-clr{background:var(--white);border:1px solid var(--cream2);border-radius:6px;padding:7px 10px;font-size:11px;color:var(--text3);cursor:pointer;}
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
-/* ── UPLOAD ── */
-.upload-area{border:2px dashed var(--cream2);border-radius:var(--r);padding:22px;text-align:center;cursor:pointer;color:var(--text3);}
-.upload-area .ui{font-size:28px;margin-bottom:6px;}
-.upload-area .ut{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:3px;}
-.upload-area .us{font-size:11px;}
-.import-prev{max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r);margin-top:10px;font-size:12px;}
-.import-prev table{width:100%;border-collapse:collapse;}
-.import-prev th{background:var(--navy);color:#fff;padding:5px 8px;text-align:left;font-size:11px;}
-.import-prev td{padding:5px 8px;border-bottom:1px solid var(--cream2);}
+    body { background: #fff !important; }
+    .editor-wrapper { max-width: 100%; padding: 0; }
+    .editor-topbar, .editor-body > .secao-topo,
+    .editor-body > .tabela-section > .grupo-label,
+    .editor-body > .obs-section > .grupo-label,
+    .modal-overlay { display: none !important; }
 
-/* ── MISC ── */
-.empty{text-align:center;padding:40px 20px;color:var(--text3);}
-.empty-ico{font-size:32px;margin-bottom:10px;opacity:.5;}
-.empty-txt{font-size:13px;}
-.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:88vw;text-align:center;}
-.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
-.instr{background:var(--cream);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;}
+    /* Remove card styling */
+    .editor-body {
+      border: none !important;
+      padding: 0 !important;
+      gap: 0 !important;
+      border-radius: 0 !important;
+    }
 
-/* ── DESKTOP ── */
-@media(min-width:700px){
-  body{background:#e8e4db;}
-  #app{max-width:480px;margin:0 auto;height:100vh;box-shadow:0 0 40px rgba(0,0,0,.2);}
-}
-@media print{.bnav,.topbar{display:none!important;} body{overflow:visible;background:#fff;}}
+    .print-form { display: block !important; }
+    .no-print { display: none !important; }
+
+    /* Autocomplete off na impressão */
+    .autocomplete-dropdown { display: none !important; }
+    input, textarea {
+      border: none !important;
+      background: transparent !important;
+      padding: 0 !important;
+      outline: none !important;
+    }
+  }
+
+  /* ===== FORMULÁRIO DE IMPRESSÃO ===== */
+  .print-form {
+    display: none;
+  }
+
+  @media print {
+    .print-form { display: block; }
+
+    .pf-outer {
+      border: 2px solid #000;
+      width: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+    }
+
+    .pf-header {
+      border-bottom: 1.5px solid #000;
+      text-align: center;
+      padding: 5pt 6pt 4pt;
+    }
+    .pf-header-inner {
+      border: 1.5pt solid #000;
+      padding: 5pt 10pt 4pt;
+      display: inline-block;
+      width: 96%;
+    }
+    .pf-header h1 {
+      font-size: 13pt;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .5pt;
+    }
+    .pf-header p {
+      font-size: 9pt;
+      font-weight: 400;
+      letter-spacing: 1pt;
+      text-transform: uppercase;
+      margin-top: 2pt;
+    }
+
+    .pf-meta {
+      display: flex;
+      border-bottom: 1.5px solid #000;
+      padding: 6pt 8pt 4pt;
+      gap: 0;
+      align-items: stretch;
+    }
+    .pf-ministerios {
+      flex: 0 0 36%;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      align-items: flex-start;
+      padding-right: 6pt;
+    }
+    .pf-min-item {
+      display: flex;
+      align-items: center;
+      gap: 5pt;
+      margin-bottom: 4pt;
+      font-size: 8pt;
+      white-space: nowrap;
+    }
+    .pf-checkbox {
+      width: 10pt; height: 10pt;
+      border: 1pt solid #000;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 7pt;
+      font-weight: 900;
+    }
+    .pf-categorias {
+      flex: 0 0 24%;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-left: 8pt;
+      border-left: none;
+      justify-content: space-around;
+    }
+    .pf-cat-item {
+      display: flex;
+      align-items: center;
+      gap: 5pt;
+      margin-bottom: 4pt;
+      font-size: 8pt;
+      white-space: nowrap;
+    }
+    .pf-solicitante {
+      flex: 1;
+      padding-left: 10pt;
+      border-left: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2pt;
+    }
+    .pf-sol-label {
+      font-weight: 700;
+      font-size: 8.5pt;
+      text-align: center;
+    }
+    .pf-sol-data-line {
+      border-bottom: 1pt solid #000;
+      width: 85%;
+      display: flex;
+      justify-content: center;
+      gap: 2pt;
+      font-size: 9pt;
+      padding-bottom: 1pt;
+      min-height: 12pt;
+      align-items: flex-end;
+    }
+    .pf-sol-nome-line {
+      border-bottom: 1pt solid #000;
+      width: 85%;
+      min-height: 14pt;
+      font-size: 9pt;
+      text-align: center;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 1pt;
+      margin-top: 5pt;
+    }
+    .pf-sol-nome-label {
+      font-weight: 700;
+      font-size: 8.5pt;
+      text-align: center;
+    }
+    .pf-sol-sublabel {
+      font-size: 8pt;
+      text-align: center;
+    }
+
+    /* TABELA DE ITENS PRINT */
+    .pf-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-top: none;
+    }
+    .pf-table th {
+      border: 1pt solid #000;
+      padding: 4pt 3pt;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-align: center;
+      background: #fff;
+    }
+    .pf-table th.th-desc { text-align: center; }
+    .pf-table td {
+      border: 1pt solid #000;
+      height: 13.4pt;
+      font-size: 8pt;
+      padding: 1pt 3pt;
+      vertical-align: middle;
+    }
+    .pf-table td.td-num { text-align: center; width: 22pt; }
+    .pf-table td.td-desc { width: auto; }
+    .pf-table td.td-und { text-align: center; width: 36pt; }
+    .pf-table td.td-qtd { text-align: center; width: 36pt; }
+
+    .pf-obs {
+      border-top: none;
+      border-left: 1pt solid #000;
+      border-right: 1pt solid #000;
+      border-bottom: none;
+      padding: 0 0 4pt 0;
+      font-size: 8pt;
+    }
+    .pf-obs-label-row {
+      display: flex;
+      align-items: center;
+      padding: 2pt 6pt;
+      gap: 6pt;
+    }
+    .pf-obs-label { font-weight: 700; font-size: 8pt; }
+    .pf-obs-label-line {
+      flex: 1;
+      border-top: none;
+    }
+    .pf-obs-box {
+      margin: 0 6pt 4pt 6pt;
+      border: 1pt solid #000;
+      min-height: 48pt;
+      padding: 3pt 4pt;
+      font-size: 8pt;
+    }
+
+    .pf-rodape {
+      border-left: 1pt solid #000;
+      border-right: 1pt solid #000;
+      border-bottom: 1pt solid #000;
+      border-top: none;
+      display: flex;
+      padding: 20pt 8pt 6pt;
+      gap: 0;
+    }
+    .pf-rodape-col {
+      flex: 1;
+      text-align: center;
+      padding: 0 8pt;
+      border-right: none;
+    }
+    .pf-rodape-col:last-child { border-right: none; }
+    .pf-assinatura-linha {
+      border-top: 1pt solid #000;
+      margin: 0 auto 4pt;
+      width: 70%;
+    }
+    .pf-rodape-nome {
+      font-weight: 700;
+      font-size: 8pt;
+      text-transform: uppercase;
+      margin-bottom: 4pt;
+    }
+    .pf-data-linha {
+      font-size: 8pt;
+      letter-spacing: .5pt;
+    }
+  }
 </style>
-</head>
-<body>
-<div class="toast" id="toast"></div>
-
-<!-- MODAIS -->
-<!-- MODAL: Preencher Nomes → PDF para assinar fisicamente -->
-<div class="ov" id="ovNomes" onclick="ovClose(event,'ovNomes')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-hdr"><span class="modal-title">📝 Responsáveis · Gerar PDF</span><button class="modal-close" onclick="closeOv('ovNomes')">✕</button></div>
-    <div class="modal-body">
-      <div style="background:var(--cream);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--navy2);" id="nomesInfo"></div>
-      <p style="font-size:12px;color:var(--text3);margin-bottom:14px;">Preencha os nomes que aparecerão impressos no PDF. A assinatura será coletada fisicamente no papel.</p>
-      <div class="field"><label>Ministério Local</label><input type="text" class="finput" id="nomeMin" placeholder="Nome completo"></div>
-      <div class="field"><label>Aprovação Técnica</label><input type="text" class="finput" id="nomeTec" placeholder="Nome completo"></div>
-      <div class="field"><label>Manutenção / Adm</label><input type="text" class="finput" id="nomeMan" placeholder="Nome completo"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeOv('ovNomes')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarNomesEPDF()">📄 Salvar e Gerar PDF</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: Assinatura Digital -->
-<div class="ov" id="ovAssinar" onclick="ovClose(event,'ovAssinar')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-hdr"><span class="modal-title">✍️ Assinar Digitalmente</span><button class="modal-close" onclick="closeOv('ovAssinar')">✕</button></div>
-    <div class="modal-body" id="bodyAssinar"></div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeOv('ovAssinar')">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarAssinatura()">💾 Salvar</button>
-    </div>
-  </div>
-</div>
-
-<div class="ov" id="ovPreview" onclick="ovClose(event,'ovPreview')">
-  <div class="modal" style="max-height:95vh;">
-    <div class="modal-handle"></div>
-    <div class="modal-hdr"><span class="modal-title">📄 Visualizar</span><button class="modal-close" onclick="closeOv('ovPreview')">✕</button></div>
-    <div class="modal-body" id="bodyPreview"></div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeOv('ovPreview')">Fechar</button>
-      <button class="btn btn-primary" onclick="imprimirAtual()">🖨️ Imprimir</button>
-    </div>
-  </div>
-</div>
-
-<div class="ov" id="ovImport" onclick="ovClose(event,'ovImport')">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-hdr"><span class="modal-title" id="importTitle">📥 Importar</span><button class="modal-close" onclick="closeOv('ovImport')">✕</button></div>
-    <div class="modal-body">
-      <div class="instr" id="importInstr"></div>
-      <div class="upload-area" onclick="document.getElementById('fileIn').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
-        <div class="ui">📂</div>
-        <div class="ut">Toque para selecionar</div>
-        <div class="us">Arquivo Excel (.xlsx ou .xls)</div>
-      </div>
-      <input type="file" id="fileIn" accept=".xlsx,.xls" style="display:none" onchange="handleFile(this.files[0])">
-      <div id="importPreview"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeOv('ovImport')">Cancelar</button>
-      <button class="btn btn-primary" id="btnImport" style="display:none" onclick="confirmarImport()">✅ Importar</button>
-    </div>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="app">
-  <!-- TOP BAR -->
-  <div class="topbar">
-    <div class="tb-logo">
-      <div class="tb-text">
-        <div class="tb-title">Congregação Cristã no Brasil</div>
-        <div class="tb-sub">Adm Vinhedo · <span style="color:var(--gold2)">REQUISIÇÕES</span></div>
-      </div>
-    </div>
-    <div class="tb-dot" id="tbDot"></div>
-  </div>
-
-  <!-- SCREENS -->
-  <div class="screens">
-
-    <!-- NOVA -->
-    <div class="screen on" id="sc-nova">
-      <div class="sec-hdr">
-        <div><div class="sec-title">Nova Requisição</div><div class="sec-sub">Preencha os dados</div></div>
-      </div>
-      <div class="spad" style="padding-top:0;">
-        <div class="num-box">
-          <span class="num-lbl">Próximo Nº</span>
-          <span class="num-val" id="numDisplay">0001</span>
-        </div>
-
-        <div class="card">
-          <div class="card-hdr"><span class="card-hdr-title">📋 Cabeçalho</span></div>
-          <div class="card-body">
-            <div class="field"><label>Data necessidade</label><input type="date" id="fData" class="finput"></div>
-            <div class="field"><label>Igreja / Setor</label>
-              <select id="fIgreja" class="finput">
-                <option value="">Selecione...</option>
-                <option>Nova Vinhedo</option><option>Jardim Bela Vista</option>
-                <option>Vila Planalto</option><option>Parque Iolanda</option>
-                <option>Residencial Vida Nova I</option><option>Chácara Lírio dos Campos</option>
-                <option>Jardim Miriam</option>
-              </select>
-            </div>
-            <div class="field"><label>Categoria</label>
-              <select id="fCat" class="finput">
-                <option value="">Selecione...</option>
-                <option>Construção</option><option>Reforma</option><option>Manutenção</option>
-                <option>Limpeza</option><option>EBI</option><option>Outros</option>
-              </select>
-            </div>
-            <div class="field"><label>Solicitante</label>
-              <select id="fSol" class="finput"><option value="">Selecione...</option></select>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-hdr"><span class="card-hdr-title">📦 Itens</span></div>
-          <div class="card-body" style="padding-bottom:8px;">
-            <div id="itensContainer" class="item-list"></div>
-            <div id="itensEmpty" style="text-align:center;padding:12px;color:var(--text3);font-size:13px;">Nenhum item. Adicione abaixo.</div>
-            <button class="btn-add" onclick="addItem()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-              Adicionar Item
-            </button>
-            <div class="total-bar">
-              <span class="total-lbl">Total</span>
-              <span class="total-val" id="totalGeral">R$ 0,00</span>
-            </div>
-          </div>
-        </div>
-
-        <button class="btn btn-primary" id="btnSalvar" onclick="salvarReq()" style="margin-bottom:8px;">
-          <span id="lblSalvar">💾 Salvar Requisição</span>
-        </button>
-        <button class="btn btn-secondary" onclick="limpar()" style="width:100%;">✕ Limpar</button>
-      </div>
-    </div>
-
-    <!-- LISTAGEM -->
-    <div class="screen" id="sc-lista">
-      <div class="sec-hdr">
-        <div><div class="sec-title">Requisições</div><div class="sec-sub" id="listaSub">—</div></div>
-        <button onclick="carregar(true)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text2);cursor:pointer;">🔄</button>
-      </div>
-      <div class="spad" style="padding-top:4px;" id="listaWrap"></div>
-    </div>
-
-    <!-- CADASTROS -->
-    <div class="screen" id="sc-cad">
-      <div class="sec-hdr">
-        <div><div class="sec-title">Cadastros</div><div class="sec-sub">Solicitantes e Itens</div></div>
-      </div>
-      <div class="spad" style="padding-top:4px;">
-
-        <div class="card">
-          <div class="card-hdr">
-            <span class="card-hdr-title">👤 Solicitantes</span>
-            <span class="card-hdr-sub" id="cntSol">0</span>
-          </div>
-          <div class="card-body">
-            <div class="inline-add">
-              <input type="text" class="finput" id="inpSol" placeholder="Nome do solicitante" onkeydown="if(event.key==='Enter')addSol()">
-              <button class="btn btn-gold btn-sm" id="btnAddSol" onclick="addSol()">＋ Adicionar</button>
-            </div>
-            <div id="cancelSolWrap" style="display:none;margin-bottom:6px;">
-              <button class="btn btn-secondary btn-sm" onclick="cancelEditSol()" style="width:100%;">✕ Cancelar edição</button>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="abrirImport('sol')" style="width:100%;margin-bottom:10px;">📥 Importar Planilha Excel</button>
-            <div id="listaSol"><p style="font-size:13px;color:var(--text3);text-align:center;padding:10px 0;">Nenhum cadastrado.</p></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-hdr">
-            <span class="card-hdr-title">📦 Itens</span>
-            <span class="card-hdr-sub" id="cntItens">0</span>
-          </div>
-          <div class="card-body">
-            <div class="inline-add">
-              <input type="text" class="finput" id="inpItemNome" placeholder="Nome do item" onkeydown="if(event.key==='Enter')addItemCad()">
-              <input type="text" class="finput und" id="inpItemUnd" placeholder="Unid." onkeydown="if(event.key==='Enter')addItemCad()">
-              <button class="btn btn-gold btn-sm" id="btnAddItem" onclick="addItemCad()">＋</button>
-            </div>
-            <div id="cancelItemWrap" style="display:none;margin-bottom:6px;">
-              <button class="btn btn-secondary btn-sm" onclick="cancelEditItem()" style="width:100%;">✕ Cancelar edição</button>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="abrirImport('item')" style="width:100%;margin-bottom:10px;">📥 Importar Planilha Excel</button>
-            <div id="listaItens"><p style="font-size:13px;color:var(--text3);text-align:center;padding:10px 0;">Nenhum cadastrado.</p></div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-  </div><!-- /screens -->
-
-  <!-- BOTTOM NAV -->
-  <div class="bnav">
-    <button class="bn on" id="bn-nova" onclick="goTo('nova',this)">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>
-      <span>Nova</span>
-    </button>
-    <button class="bn" id="bn-lista" onclick="goTo('lista',this)">
-      <div class="bn-wrap">
-        <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h4"/></svg>
-        <div class="badge" id="badgePend" style="display:none">!</div>
-      </div>
-      <span>Listagem</span>
-    </button>
-    <button class="bn" id="bn-cad" onclick="goTo('cad',this)">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>
-      <span>Cadastros</span>
-    </button>
-  </div>
-</div>
-
-<datalist id="dlItens"></datalist>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ===== INTERFACE DE EDIÇÃO ===== -->
+<div class="editor-wrapper no-print">
+  <div class="editor-topbar">
+    <h1>📋 Requisição de Compras — Administração Vinhedo</h1>
+    <div class="btns">
+      <button class="btn btn-base" onclick="abrirBase()">⚙️ Base de Itens</button>
+      <button class="btn" style="background:#7b5ea7;color:#fff;" onclick="abrirListaReqs()">📋 Requisições</button>
+      <button class="btn btn-clear" onclick="limparFormulario()">🗑️ Limpar</button>
+      <button class="btn btn-print" onclick="salvarESalvar()">💾 Salvar</button>
+      <button class="btn btn-print" onclick="imprimir()">🖨️ Imprimir PDF</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:rgba(255,255,255,.7);">
+      <div id="syncDot" style="width:8px;height:8px;border-radius:50%;background:#6ee7b7;" title="Verificando..."></div>
+      <span id="syncTxt">Verificando...</span>
+    </div>
+  </div>
+
+  <div class="editor-body">
+
+    <!-- NÚMERO DA REQUISIÇÃO -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#1a3a6b;border-radius:8px;padding:10px 18px;">
+      <span style="color:rgba(255,255,255,.6);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Próximo Nº</span>
+      <span id="numReqDisplay" style="color:#f6c94e;font-size:1.4rem;font-weight:800;font-family:monospace;letter-spacing:2px;">0001</span>
+      <button onclick="compartilharApp()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:6px;padding:5px 12px;font-size:.78rem;cursor:pointer;">📲 Compartilhar App</button>
+    </div>
+
+    <!-- SEÇÃO SUPERIOR -->
+    <div class="secao-topo">
+
+      <!-- MINISTÉRIOS -->
+      <div>
+        <div class="grupo-label">Ministério</div>
+        <div class="ministerios-lista" id="ministeriosLista">
+          <label><input type="checkbox" id="min0" value="NOVA VINHEDO"> Nova Vinhedo</label>
+          <label><input type="checkbox" id="min1" value="JARDIM BELA VISTA"> Jardim Bela Vista</label>
+          <label><input type="checkbox" id="min2" value="VILA PLANALTO"> Vila Planalto</label>
+          <label><input type="checkbox" id="min3" value="PARQUE IOLANDA"> Parque Iolanda</label>
+          <label><input type="checkbox" id="min4" value="RESIDENCIAL VIDA NOVA I"> Residencial Vida Nova I</label>
+          <label><input type="checkbox" id="min5" value="CHÁCARA LÍRIO DOS CAMPOS"> Chácara Lírio dos Campos</label>
+          <label><input type="checkbox" id="min6" value="JARDIM MIRIAM"> Jardim Miriam</label>
+        </div>
+      </div>
+
+      <!-- CATEGORIAS -->
+      <div>
+        <div class="grupo-label">Categoria</div>
+        <div class="categorias-lista">
+          <label><input type="checkbox" id="cat0" value="CONSTRUÇÃO"> Construção</label>
+          <label><input type="checkbox" id="cat1" value="REFORMA"> Reforma</label>
+          <label><input type="checkbox" id="cat2" value="MANUTENÇÃO"> Manutenção</label>
+          <label><input type="checkbox" id="cat3" value="OUTROS"> Outros</label>
+        </div>
+      </div>
+
+      <!-- DATA E SOLICITANTE -->
+      <div class="campo-solicitante">
+        <div>
+          <div class="grupo-label">Data da Solicitação</div>
+          <div class="campo-data">
+            <input type="date" id="dataSolicitacao">
+          </div>
+        </div>
+        <div>
+          <div class="grupo-label">Nome do Solicitante (por extenso)</div>
+          <input type="text" id="nomeSolicitante" placeholder="Nome completo do solicitante">
+        </div>
+      </div>
+    </div>
+
+    <!-- TABELA DE ITENS -->
+    <div class="tabela-section">
+      <div class="grupo-label">Itens — clique na Descrição para buscar na base</div>
+      <table class="tabela-itens" id="tabelaItens">
+        <thead>
+          <tr>
+            <th>ITEM</th>
+            <th style="text-align:left;padding-left:10px">DESCRIÇÃO</th>
+            <th>UND</th>
+            <th>QNTD</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyItens"></tbody>
+      </table>
+    </div>
+
+    <!-- OBSERVAÇÃO -->
+    <div class="obs-section">
+      <div class="grupo-label">Observação</div>
+      <textarea id="observacao" placeholder="Observações adicionais..."></textarea>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== FORMULÁRIO DE IMPRESSÃO (oculto, aparece só ao imprimir) ===== -->
+<div class="print-form" id="printForm">
+  <div class="pf-outer">
+
+    <!-- CABEÇALHO -->
+    <div class="pf-header">
+      <div class="pf-header-inner">
+        <h1>Congregação Cristã no Brasil</h1>
+        <p>Requisição de Compras - Administração Vinhedo</p>
+      </div>
+    </div>
+
+    <!-- META: MINISTÉRIOS / CATEGORIAS / SOLICITANTE -->
+    <div class="pf-meta">
+      <div class="pf-ministerios" id="pf-ministerios"></div>
+      <div class="pf-categorias" id="pf-categorias"></div>
+      <div class="pf-solicitante">
+        <div class="pf-sol-label">DATA DA SOLICITAÇÃO</div>
+        <div class="pf-sol-data-line" id="pf-data-sol">_____ / ______ / ________</div>
+        <div style="height:8pt"></div>
+        <div class="pf-sol-nome-line" id="pf-nome-sol"></div>
+        <div class="pf-sol-nome-label">NOME DO SOLICITANTE</div>
+        <div class="pf-sol-sublabel">(POR EXTENSO)</div>
+      </div>
+    </div>
+
+    <!-- TABELA -->
+    <table class="pf-table" id="pf-table">
+      <thead>
+        <tr>
+          <th style="width:22pt">ITEM</th>
+          <th class="th-desc">DESCRIÇÃO</th>
+          <th style="width:36pt">UND</th>
+          <th style="width:36pt">QNTD</th>
+        </tr>
+      </thead>
+      <tbody id="pf-tbody"></tbody>
+    </table>
+
+    <!-- OBSERVAÇÃO -->
+    <div class="pf-obs">
+      <div class="pf-obs-label-row">
+        <span class="pf-obs-label">OBSERVAÇÃO:</span>
+      </div>
+      <div class="pf-obs-box" id="pf-obs-text"></div>
+    </div>
+
+    <!-- RODAPÉ -->
+    <div class="pf-rodape">
+      <div class="pf-rodape-col">
+        <div class="pf-assinatura-linha"></div>
+        <div class="pf-rodape-nome">Ministério Local</div>
+        <div class="pf-data-linha">DATA ______/______/_________</div>
+      </div>
+      <div class="pf-rodape-col">
+        <div class="pf-assinatura-linha"></div>
+        <div class="pf-rodape-nome">Aprovação Técnica</div>
+        <div class="pf-data-linha">DATA ______/______/_________</div>
+      </div>
+      <div class="pf-rodape-col">
+        <div class="pf-assinatura-linha"></div>
+        <div class="pf-rodape-nome">Aprovação ADM</div>
+        <div class="pf-data-linha">DATA ______/______/_________</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL BASE DE ITENS ===== -->
+<div class="modal-overlay" id="modalBase">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚙️ Gerenciar Base de Itens</h2>
+      <button class="modal-close" onclick="fecharBase()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="search-bar" id="searchBase" placeholder="Buscar item na base..." oninput="filtrarBase()">
+      <table class="base-table">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th style="width:80px">Unidade</th>
+            <th style="width:60px">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="baseTableBody"></tbody>
+      </table>
+      <div class="add-item-row">
+        <input type="text" class="inp-desc" id="novoItemDesc" placeholder="Nova descrição do item...">
+        <input type="text" class="inp-und" id="novoItemUnd" placeholder="UND">
+        <button class="btn-add-item" onclick="adicionarItemBase()">+ Adicionar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ══════════════════════════════════════
-   CONFIGURAÇÃO — altere com seus dados
-   do projeto Firebase
-══════════════════════════════════════ */
+// ===== BASE DE ITENS (editável e persistida no localStorage) =====
+const BASE_KEY = 'ccb_base_itens_v1';
+const NUM_LINHAS = 25;
+
+let baseItens = carregarBase();
+let activeDropdown = null;
+let activeIndex = -1;
+
+function carregarBase() {
+  try {
+    const saved = localStorage.getItem(BASE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  // Base de itens — Materiais Construção Civil v10
+  return [
+  { desc: "Fio 1,5mm Flexível", und: "m" },
+  { desc: "Fio 2,5mm Flexível", und: "m" },
+  { desc: "Fio 4mm Flexível", und: "m" },
+  { desc: "Fio 6mm Flexível", und: "m" },
+  { desc: "Fio 10mm Flexível", und: "m" },
+  { desc: "Fio 16mm Flexível", und: "m" },
+  { desc: "Fio 25mm Flexível", und: "m" },
+  { desc: "Cabo PP 2x1,5mm", und: "m" },
+  { desc: "Cabo PP 3x1,5mm", und: "m" },
+  { desc: "Cabo PP 3x2,5mm", und: "m" },
+  { desc: "Cabo PP 4x2,5mm", und: "m" },
+  { desc: "Cabo CFTV 4 Pares Cat5e", und: "m" },
+  { desc: "Cabo CFTV 4 Pares Cat6", und: "m" },
+  { desc: "Cabo Coaxial RG6", und: "m" },
+  { desc: "Cabo Telefônico 2 Pares", und: "m" },
+  { desc: "Cabo HDMI 5m", und: "un" },
+  { desc: "Cabo Terra (Verde/Amarelo) 6mm", und: "m" },
+  { desc: "Eletroduto PVC 3/4\" (20mm) Rígido", und: "m" },
+  { desc: "Eletroduto PVC 1\" (25mm) Rígido", und: "m" },
+  { desc: "Eletroduto PVC 1.1/4\" (32mm) Rígido", und: "m" },
+  { desc: "Eletroduto PVC 1.1/2\" (40mm) Rígido", und: "m" },
+  { desc: "Eletroduto PVC 2\" (50mm) Rígido", und: "m" },
+  { desc: "Conduíte Flexível 3/4\" (20mm)", und: "m" },
+  { desc: "Conduíte Flexível 1\" (25mm)", und: "m" },
+  { desc: "Curva 90° Eletroduto 3/4\" (20mm)", und: "un" },
+  { desc: "Curva 90° Eletroduto 1\" (25mm)", und: "un" },
+  { desc: "Luva Eletroduto 3/4\" (20mm)", und: "un" },
+  { desc: "Luva Eletroduto 1\" (25mm)", und: "un" },
+  { desc: "Arruela/Bucha Plástica 3/4\" (20mm)", und: "un" },
+  { desc: "Caixa 4x2 Plástica", und: "un" },
+  { desc: "Caixa 4x4 Plástica", und: "un" },
+  { desc: "Caixa 4x2 Metálica", und: "un" },
+  { desc: "Caixa Octogonal 4x4", und: "un" },
+  { desc: "Caixa de Passagem 10x10", und: "un" },
+  { desc: "Caixa de Passagem 20x20", und: "un" },
+  { desc: "Caixa de Passagem 30x30", und: "un" },
+  { desc: "Quadro Disjuntores 4 Disjuntores", und: "un" },
+  { desc: "Quadro Disjuntores 8 Disjuntores", und: "un" },
+  { desc: "Quadro Disjuntores 12 Disjuntores", und: "un" },
+  { desc: "Quadro Disjuntores 16 Disjuntores", und: "un" },
+  { desc: "Quadro Disjuntores 24 Disjuntores", und: "un" },
+  { desc: "Quadro Disjuntores 36 Disjuntores", und: "un" },
+  { desc: "DPS Protetor de Surto Mono", und: "un" },
+  { desc: "DPS Protetor de Surto Tri", und: "un" },
+  { desc: "Fusível Cartucho 20A", und: "un" },
+  { desc: "Fusível Cartucho 32A", und: "un" },
+  { desc: "Tomada 2P+T 10A Branca", und: "un" },
+  { desc: "Tomada 2P+T 20A Branca", und: "un" },
+  { desc: "Tomada 2P+T 10A Preta", und: "un" },
+  { desc: "Tomada USB-A + Tomada Branca", und: "un" },
+  { desc: "Tomada USB-C + Tomada Branca", und: "un" },
+  { desc: "Tomada RJ45 Cat6", und: "un" },
+  { desc: "Tomada TV/Coaxial", und: "un" },
+  { desc: "Tomada Telefônica RJ11", und: "un" },
+  { desc: "Interruptor Simples 10A", und: "un" },
+  { desc: "Interruptor Duplo 10A", und: "un" },
+  { desc: "Interruptor Triplo 10A", und: "un" },
+  { desc: "Interruptor Three Way (vai e vem)", und: "un" },
+  { desc: "Interruptor Dimmer", und: "un" },
+  { desc: "Interruptor Sensor Presença", und: "un" },
+  { desc: "Interruptor Temporizador", und: "un" },
+  { desc: "Placa 4x2 1 Módulo", und: "un" },
+  { desc: "Placa 4x2 2 Módulos", und: "un" },
+  { desc: "Placa 4x4 4 Módulos", und: "un" },
+  { desc: "Placa 4x4 6 Módulos", und: "un" },
+  { desc: "Lâmpada LED Bulbo E27 9W Branco Frio", und: "un" },
+  { desc: "Lâmpada LED Bulbo E27 9W Branco Quente", und: "un" },
+  { desc: "Lâmpada LED Bulbo E27 12W Branco Frio", und: "un" },
+  { desc: "Lâmpada LED Bulbo E27 12W Branco Quente", und: "un" },
+  { desc: "Lâmpada LED Bulbo E27 15W Branco Frio", und: "un" },
+  { desc: "Lâmpada LED Bulbo E27 15W Neutro", und: "un" },
+  { desc: "Lâmpada LED Bulbo E14 5W", und: "un" },
+  { desc: "Lâmpada LED Bulbo E14 7W", und: "un" },
+  { desc: "Lâmpada LED Tubular T5 600mm 10W", und: "un" },
+  { desc: "Lâmpada LED PAR20 7W", und: "un" },
+  { desc: "Lâmpada LED PAR30 12W", und: "un" },
+  { desc: "Lâmpada LED PAR38 16W", und: "un" },
+  { desc: "Lâmpada LED Dicroica GU10 7W", und: "un" },
+  { desc: "Lâmpada LED Dicroica MR16 5W", und: "un" },
+  { desc: "Lâmpada LED Vela E14 5W", und: "un" },
+  { desc: "Lâmpada LED Filamento A60 4W", und: "un" },
+  { desc: "Lâmpada LED Filamento G125 4W", und: "un" },
+  { desc: "Lâmpada LED Halopin G9 4W", und: "un" },
+  { desc: "Lâmpada LED Halopin G9 6W", und: "un" },
+  { desc: "Lâmpada LED Spot Embutir 5W", und: "un" },
+  { desc: "Lâmpada LED Spot Embutir 9W", und: "un" },
+  { desc: "Lâmpada LED Plafon Embutir 12W", und: "un" },
+  { desc: "Lâmpada LED Plafon Embutir 18W", und: "un" },
+  { desc: "Lâmpada LED Plafon Embutir 24W", und: "un" },
+  { desc: "Lâmpada LED Bulbo Inteligente RGB E27", und: "un" },
+  { desc: "Lâmpada LED Emergência 6W", und: "un" },
+  { desc: "Lâmpada LED Vapor Sódio 70W E27", und: "un" },
+  { desc: "Lâmpada LED Vapor Metálico 100W", und: "un" },
+  { desc: "Lâmpada LED High Bay 100W", und: "un" },
+  { desc: "Lâmpada LED High Bay 150W", und: "un" },
+  { desc: "Lâmpada LED Bulbo A70 20W", und: "un" },
+  { desc: "Fita LED 5m Branco Frio 6000K", und: "rolo" },
+  { desc: "Fita LED 5m Branco Quente 3000K", und: "rolo" },
+  { desc: "Fita LED 5m Neutro 4000K", und: "rolo" },
+  { desc: "Fita LED 5m RGB", und: "rolo" },
+  { desc: "Fita LED 5m RGBW", und: "rolo" },
+  { desc: "Fonte/Driver Fita LED 12V 30W", und: "un" },
+  { desc: "Fonte/Driver Fita LED 12V 60W", und: "un" },
+  { desc: "Perfil Alumínio Fita LED 1m", und: "un" },
+  { desc: "Controlador RGB Fita LED", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 600mm 9W Branco Frio", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 600mm 9W Branco Quente", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 600mm 9W Neutro", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 1200mm 18W Branco Frio", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 1200mm 18W Branco Quente", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 1200mm 18W Neutro", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 1500mm 24W Branco Frio", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 1500mm 24W Branco Quente", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 1500mm 24W Neutro", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 2400mm 45W Branco Frio", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 2400mm 45W Branco Quente", und: "un" },
+  { desc: "Lâmpada LED Tubular T8 2400mm 45W Neutro", und: "un" },
+  { desc: "Calha Sobrepor T8 1 Lâmpada 600mm", und: "un" },
+  { desc: "Calha Sobrepor T8 2 Lâmpadas 600mm", und: "un" },
+  { desc: "Calha Sobrepor T8 1 Lâmpada 1200mm", und: "un" },
+  { desc: "Calha Sobrepor T8 2 Lâmpadas 1200mm", und: "un" },
+  { desc: "Calha Sobrepor T8 1 Lâmpada 1500mm", und: "un" },
+  { desc: "Calha Embutir T8 2 Lâmpadas 1200mm", und: "un" },
+  { desc: "Reator Eletrônico T8 1x20W", und: "un" },
+  { desc: "Reator Eletrônico T8 2x20W", und: "un" },
+  { desc: "Starter T8 FS-2 (para reator)", und: "un" },
+  { desc: "Luminária Sobrepor Quadrada 18W", und: "un" },
+  { desc: "Luminária Sobrepor Redonda 18W", und: "un" },
+  { desc: "Luminária Embutir Quadrada 24W", und: "un" },
+  { desc: "Luminária Embutir Tubular 2x9W", und: "un" },
+  { desc: "Luminária Arandela Parede", und: "un" },
+  { desc: "Luminária Poste Jardim 3m", und: "un" },
+  { desc: "Luminária Sobrepor Calha LED 40W", und: "un" },
+  { desc: "Luminária Pendente Simples", und: "un" },
+  { desc: "Luminária Solar Jardim", und: "un" },
+  { desc: "Refletor LED 10W", und: "un" },
+  { desc: "Refletor LED 20W", und: "un" },
+  { desc: "Refletor LED 50W", und: "un" },
+  { desc: "Refletor LED 100W", und: "un" },
+  { desc: "Refletor LED 200W", und: "un" },
+  { desc: "Refletor LED Solar 30W", und: "un" },
+  { desc: "Spot Trilho LED 7W", und: "un" },
+  { desc: "Spot Trilho LED 12W", und: "un" },
+  { desc: "Trilho para Spot 1m", und: "un" },
+  { desc: "Campainha 220V", und: "un" },
+  { desc: "Botão de Campainha", und: "un" },
+  { desc: "Interfone Simples", und: "un" },
+  { desc: "Câmera IP Wi-Fi Interna", und: "un" },
+  { desc: "Câmera IP Wi-Fi Externa", und: "un" },
+  { desc: "Sensor de Presença Teto", und: "un" },
+  { desc: "Sensor de Abertura Porta/Janela", und: "un" },
+  { desc: "Alarme Sonoro Externo", und: "un" },
+  { desc: "Nobreak 600VA", und: "un" },
+  { desc: "Estabilizador 1000VA", und: "un" },
+  { desc: "Fita Isolante 19mm x 20m", und: "un" },
+  { desc: "Fita Autofusão 25mm x 3m", und: "un" },
+  { desc: "Abraçadeira Nylon 100un", und: "pct" },
+  { desc: "Bucha e Parafuso S6 100un", und: "pct" },
+  { desc: "Bucha e Parafuso S8 100un", und: "pct" },
+  { desc: "Presilha Fixação Cabo", und: "un" },
+  { desc: "Conector Emenda 3 Vias Transparente", und: "un" },
+  { desc: "Conector Emenda 5 Vias Transparente", und: "un" },
+  { desc: "Terminal Olhal 4mm 100un", und: "pct" },
+  { desc: "Terminal Pino 2,5mm 100un", und: "pct" },
+  { desc: "Canaleta PVC 20x10mm 2m", und: "barra" },
+  { desc: "Canaleta PVC 40x16mm 2m", und: "barra" },
+  { desc: "Régua de Tomadas 5 Tomadas + USB", und: "un" },
+  { desc: "Adaptador T 10A", und: "un" },
+  { desc: "Multímetro Digital", und: "un" },
+  { desc: "Tubo PVC Água Fria 20mm 3/4\" (20mm) 6m", und: "barra" },
+  { desc: "Tubo PVC Água Fria 25mm 3/4\" (20mm) 6m", und: "barra" },
+  { desc: "Tubo PVC Água Fria 32mm 1\" (25mm) 6m", und: "barra" },
+  { desc: "Tubo PVC Água Fria 40mm 6m", und: "barra" },
+  { desc: "Tubo PVC Água Fria 50mm 6m", und: "barra" },
+  { desc: "Tubo PVC Água Fria 60mm 6m", und: "barra" },
+  { desc: "Tubo Polietileno Flexível 20mm 50m", und: "rolo" },
+  { desc: "Tubo Polietileno Flexível 25mm 50m", und: "rolo" },
+  { desc: "Joelho 90° PVC 20mm", und: "un" },
+  { desc: "Joelho 90° PVC 25mm", und: "un" },
+  { desc: "Joelho 90° PVC 32mm", und: "un" },
+  { desc: "Joelho 45° PVC 20mm", und: "un" },
+  { desc: "Joelho 45° PVC 25mm", und: "un" },
+  { desc: "Tê PVC 20mm", und: "un" },
+  { desc: "Tê PVC 25mm", und: "un" },
+  { desc: "Tê PVC 32mm", und: "un" },
+  { desc: "Luva Simples PVC 20mm", und: "un" },
+  { desc: "Luva Simples PVC 25mm", und: "un" },
+  { desc: "Luva de Correr PVC 20mm", und: "un" },
+  { desc: "Redução Bucha PVC 25x20mm", und: "un" },
+  { desc: "Redução Bucha PVC 32x25mm", und: "un" },
+  { desc: "Cap PVC 20mm", und: "un" },
+  { desc: "Cap PVC 25mm", und: "un" },
+  { desc: "Adaptador Curto 20mm x 1/2\" (15mm)", und: "un" },
+  { desc: "Adaptador Curto 25mm x 3/4\" (20mm)", und: "un" },
+  { desc: "Adaptador Longo 20mm x 1/2\" (15mm)", und: "un" },
+  { desc: "União PVC 20mm", und: "un" },
+  { desc: "União PVC 25mm", und: "un" },
+  { desc: "Registro de Gaveta 1/2\" (15mm)", und: "un" },
+  { desc: "Registro de Gaveta 3/4\" (20mm)", und: "un" },
+  { desc: "Registro de Gaveta 1\" (25mm)", und: "un" },
+  { desc: "Registro de Esfera 1/2\" (15mm)", und: "un" },
+  { desc: "Registro de Esfera 3/4\" (20mm)", und: "un" },
+  { desc: "Registro de Esfera 1\" (25mm)", und: "un" },
+  { desc: "Válvula de Retenção 3/4\" (20mm)", und: "un" },
+  { desc: "Válvula de Retenção 1\" (25mm)", und: "un" },
+  { desc: "Válvula de Pé com Crivo 1\" (25mm)", und: "un" },
+  { desc: "Válvula Redutora de Pressão", und: "un" },
+  { desc: "Hidrômetro 3/4\" (20mm)", und: "un" },
+  { desc: "Tubo CPVC Água Quente 15mm 3m", und: "barra" },
+  { desc: "Tubo CPVC Água Quente 22mm 3m", und: "barra" },
+  { desc: "Tubo PPR Água Quente 20mm 4m", und: "barra" },
+  { desc: "Tubo PPR Água Quente 25mm 4m", und: "barra" },
+  { desc: "Tubo PPR Água Quente 32mm 4m", und: "barra" },
+  { desc: "Joelho PPR 90° 20mm", und: "un" },
+  { desc: "Joelho PPR 90° 25mm", und: "un" },
+  { desc: "Tê PPR 20mm", und: "un" },
+  { desc: "Tê PPR 25mm", und: "un" },
+  { desc: "Luva PPR 20mm", und: "un" },
+  { desc: "Adaptador PPR 20mm x 1/2\" (15mm)", und: "un" },
+  { desc: "Solda CPVC 850ml", und: "un" },
+  { desc: "Tubo PVC Esgoto 40mm 6m", und: "barra" },
+  { desc: "Tubo PVC Esgoto 50mm 6m", und: "barra" },
+  { desc: "Tubo PVC Esgoto 75mm 6m", und: "barra" },
+  { desc: "Tubo PVC Esgoto 100mm 6m", und: "barra" },
+  { desc: "Joelho 90° Esgoto 40mm", und: "un" },
+  { desc: "Joelho 90° Esgoto 100mm", und: "un" },
+  { desc: "Joelho 45° Esgoto 100mm", und: "un" },
+  { desc: "Joelho 45° Esgoto 50mm", und: "un" },
+  { desc: "Tê Esgoto 100mm", und: "un" },
+  { desc: "Tê Esgoto 100x50mm", und: "un" },
+  { desc: "Luva Simples Esgoto 100mm", und: "un" },
+  { desc: "Redução Excêntrica Esgoto 100x50mm", und: "un" },
+  { desc: "Redução Excêntrica Esgoto 75x50mm", und: "un" },
+  { desc: "Caixa de Inspeção 40x40", und: "un" },
+  { desc: "Caixa de Inspeção 60x60", und: "un" },
+  { desc: "Caixa de Gordura 40x40", und: "un" },
+  { desc: "Sifão Garrafa 1.1/2\" (40mm)", und: "un" },
+  { desc: "Sifão PVC Pia 1.1/2\" (40mm)", und: "un" },
+  { desc: "Ralo Seco Cozinha 10x10", und: "un" },
+  { desc: "Ralo Seco Banheiro 10x10", und: "un" },
+  { desc: "Ralo Linear 50cm Inox", und: "un" },
+  { desc: "Grelha PVC 10x10", und: "un" },
+  { desc: "Ramal de Inspeção 100mm", und: "un" },
+  { desc: "Tubo Ventilação PVC 40mm 3m", und: "barra" },
+  { desc: "Torneira Mesa Bica Alta", und: "un" },
+  { desc: "Torneira Mesa Bica Baixa", und: "un" },
+  { desc: "Torneira Parede Bica Móvel", und: "un" },
+  { desc: "Torneira Lavatório de Parede", und: "un" },
+  { desc: "Torneira Elétrica Aquecimento", und: "un" },
+  { desc: "Torneira Sensor Automática", und: "un" },
+  { desc: "Ducha Higiênica com Registro", und: "un" },
+  { desc: "Chuveiro Elétrico 5500W", und: "un" },
+  { desc: "Chuveiro Elétrico 7500W", und: "un" },
+  { desc: "Chuveiro a Gás Passagem", und: "un" },
+  { desc: "Misturador Ducha Monocomando", und: "un" },
+  { desc: "Registro Pressão Cromado 1/2\" (15mm)", und: "un" },
+  { desc: "Registro Pressão Cromado 3/4\" (20mm)", und: "un" },
+  { desc: "Válvula Descarga Sobrepor", und: "un" },
+  { desc: "Válvula Descarga Embutir", und: "un" },
+  { desc: "Caixa Acoplada Vaso Sanitário", und: "un" },
+  { desc: "Vaso Sanitário Convencional", und: "un" },
+  { desc: "Vaso Sanitário Caixa Acoplada", und: "un" },
+  { desc: "Mictório Porcelana", und: "un" },
+  { desc: "Pia Cozinha Inox 1 Cuba", und: "un" },
+  { desc: "Pia Cozinha Inox 2 Cubas", und: "un" },
+  { desc: "Cuba Embutir Inox", und: "un" },
+  { desc: "Cuba Semi-embutir Porcelana", und: "un" },
+  { desc: "Lavatório Coluna Branca", und: "un" },
+  { desc: "Lavatório Semi-embutir", und: "un" },
+  { desc: "Banheira Simples Acrílica", und: "un" },
+  { desc: "Cabine de Chuveiro Vidro", und: "un" },
+  { desc: "Acessório Banheiro Kit 5 Peças", und: "kit" },
+  { desc: "Suporte Papel Higiênico Inox", und: "un" },
+  { desc: "Saboneteira de Embutir", und: "un" },
+  { desc: "Toalheiro Duplo Inox 60cm", und: "un" },
+  { desc: "Caixa D\'água 500L", und: "un" },
+  { desc: "Caixa D\'água 1000L", und: "un" },
+  { desc: "Caixa D\'água 2000L", und: "un" },
+  { desc: "Cisterna 3000L", und: "un" },
+  { desc: "Cisterna 5000L", und: "un" },
+  { desc: "Bomba d\'Água 0,5CV", und: "un" },
+  { desc: "Bomba d\'Água 1CV", und: "un" },
+  { desc: "Bomba d\'Água 2CV", und: "un" },
+  { desc: "Bomba Submersa 1CV", und: "un" },
+  { desc: "Pressurizador 1/3CV", und: "un" },
+  { desc: "Pressurizador 1/2CV", und: "un" },
+  { desc: "Coletor Solar Plano 2m²", und: "un" },
+  { desc: "Reservatório Boiler 200L", und: "un" },
+  { desc: "Aquecedor Passagem Gás 15L/min", und: "un" },
+  { desc: "Registro de Gás Esfera 1/2\" (15mm)", und: "un" },
+  { desc: "Tubo Cobre 15mm Mole 15m", und: "rolo" },
+  { desc: "Tubo Cobre 22mm Rígido 3m", und: "barra" },
+  { desc: "Joelho Cobre Soldar 15mm", und: "un" },
+  { desc: "Tê Cobre Soldar 15mm", und: "un" },
+  { desc: "Solda PVC 850ml", und: "un" },
+  { desc: "Fita Veda Rosca 18mm x 50m", und: "rolo" },
+  { desc: "Fita Veda Rosca 25mm x 50m", und: "rolo" },
+  { desc: "Vedante Silicone Branco 280g", und: "un" },
+  { desc: "Vedante Silicone Transparente 280g", und: "un" },
+  { desc: "Cimento para PVC 175g", und: "un" },
+  { desc: "Filtro de Linha Água", und: "un" },
+  { desc: "Filtro Sedimento Caixa D\'água", und: "un" },
+  { desc: "Flutuador Boia 3/4\" (20mm)", und: "un" },
+  { desc: "Abraçadeira Tubos 20mm", und: "un" },
+  { desc: "Abraçadeira Tubos 25mm", und: "un" },
+  { desc: "Espaçador de Parede Tubo", und: "un" },
+  { desc: "Anel de Vedação EPDM 100mm", und: "un" },
+  { desc: "Parafuso Zincado c/ Bucha M6 100un", und: "pct" },
+  { desc: "Desinfetante Pinho 2L", und: "un" },
+  { desc: "Desinfetante Lavanda 2L", und: "un" },
+  { desc: "Desinfetante Floral 2L", und: "un" },
+  { desc: "Desinfetante Concentrado 5L", und: "un" },
+  { desc: "Álcool 70% Líquido 1L", und: "un" },
+  { desc: "Álcool 70% Gel 500g", und: "un" },
+  { desc: "Álcool 70% Gel 5L", und: "un" },
+  { desc: "Álcool Isopropílico 1L", und: "un" },
+  { desc: "Hipoclorito de Sódio 5L", und: "un" },
+  { desc: "Cloro Granulado 1kg", und: "un" },
+  { desc: "Cloro Pastilha 200g 3un", und: "pct" },
+  { desc: "Limpador Banheiro Ácido 1L", und: "un" },
+  { desc: "Removedor de Ferrugem 500ml", und: "un" },
+  { desc: "Desentupidor Ralos Gel 300ml", und: "un" },
+  { desc: "Limpa Pedra Sanitária Líquido 1L", und: "un" },
+  { desc: "Limpa Vaso Sanitário com Pincel", und: "un" },
+  { desc: "Pedra Sanitária Gel 50g", und: "un" },
+  { desc: "Limpa Rejunte Banheiro 500ml", und: "un" },
+  { desc: "Removedor Mofo Spray 400ml", und: "un" },
+  { desc: "Detergente Neutro 500ml", und: "un" },
+  { desc: "Detergente Neutro 5L", und: "un" },
+  { desc: "Detergente Concentrado 1L", und: "un" },
+  { desc: "Detergente Lava-Louça Máquina 1kg", und: "un" },
+  { desc: "Sal Brilhante Máquina Louça 1kg", und: "un" },
+  { desc: "Desgordurante Cozinha Spray 400ml", und: "un" },
+  { desc: "Desgordurante Industrial 5L", und: "un" },
+  { desc: "Limpa Fogão Spray 300ml", und: "un" },
+  { desc: "Multiuso Spray 500ml", und: "un" },
+  { desc: "Multiuso Concentrado 5L", und: "un" },
+  { desc: "Limpa Micro-ondas Spray 300ml", und: "un" },
+  { desc: "Sabão em Pó 1kg", und: "un" },
+  { desc: "Sabão em Pó 3kg", und: "un" },
+  { desc: "Sabão em Pó 5kg", und: "un" },
+  { desc: "Sabão Líquido 2L", und: "un" },
+  { desc: "Sabão Líquido 5L", und: "un" },
+  { desc: "Sabão em Barra 200g", und: "un" },
+  { desc: "Amaciante de Roupas 2L", und: "un" },
+  { desc: "Amaciante de Roupas 5L", und: "un" },
+  { desc: "Tira Manchas Oxi-Ação 1L", und: "un" },
+  { desc: "Alvejante sem Cloro 1L", und: "un" },
+  { desc: "Alvejante com Cloro 1L", und: "un" },
+  { desc: "Goma para Roupas Spray 400ml", und: "un" },
+  { desc: "Impermeabilizante Tecido Spray 300ml", und: "un" },
+  { desc: "Limpador Piso Concentrado 5L", und: "un" },
+  { desc: "Cera Líquida Piso 900ml", und: "un" },
+  { desc: "Cera em Pasta Piso 750g", und: "un" },
+  { desc: "Removedor de Cera 5L", und: "un" },
+  { desc: "Limpa Porcelanato 1L", und: "un" },
+  { desc: "Limpa Granito/Mármore 1L", und: "un" },
+  { desc: "Removedor Rejunte Escurecido 500ml", und: "un" },
+  { desc: "Limpa Carpete Spray 400ml", und: "un" },
+  { desc: "Limpa Pedra Natural 1L", und: "un" },
+  { desc: "Limpa Vidros Spray 500ml", und: "un" },
+  { desc: "Limpa Vidros Concentrado 1L", und: "un" },
+  { desc: "Limpa Inox Spray 300ml", und: "un" },
+  { desc: "Limpa Alumínio 500ml", und: "un" },
+  { desc: "Limpa Tela e Monitor Spray 200ml", und: "un" },
+  { desc: "Água Sanitária 1L", und: "un" },
+  { desc: "Água Sanitária 5L", und: "un" },
+  { desc: "Limpa Ar Condicionado Spray 400ml", und: "un" },
+  { desc: "Limpa Estofados Spray 400ml", und: "un" },
+  { desc: "Limpa Couro Spray 300ml", und: "un" },
+  { desc: "Revitalizador Borracha/Plástico 300ml", und: "un" },
+  { desc: "Silicone Spray 300ml", und: "un" },
+  { desc: "Lustra Móveis Spray 300ml", und: "un" },
+  { desc: "Limpa Piscina Cloro 10L", und: "un" },
+  { desc: "Limpa Garagem Desincrustante 1L", und: "un" },
+  { desc: "Papel Higiênico Folha Dupla 4un", und: "pct" },
+  { desc: "Papel Higiênico Folha Dupla 12un", und: "pct" },
+  { desc: "Papel Higiênico Folha Dupla 24un", und: "pct" },
+  { desc: "Papel Higiênico Folha Tripla 4un", und: "pct" },
+  { desc: "Papel Toalha Interfolhado 1000 folhas", und: "pct" },
+  { desc: "Papel Toalha Rolo 2un", und: "pct" },
+  { desc: "Papel Toalha Rolo 6un", und: "pct" },
+  { desc: "Sabonete Líquido 500ml", und: "un" },
+  { desc: "Sabonete Líquido 5L", und: "un" },
+  { desc: "Sabonete em Barra 90g", und: "un" },
+  { desc: "Sabonete Esfoliante 200ml", und: "un" },
+  { desc: "Guardanapo 30x30 100un", und: "pct" },
+  { desc: "Saco de Lixo 15L 30un", und: "pct" },
+  { desc: "Saco de Lixo 30L 30un", und: "pct" },
+  { desc: "Saco de Lixo 60L 20un", und: "pct" },
+  { desc: "Saco de Lixo 100L 10un", und: "pct" },
+  { desc: "Saco de Lixo 200L 5un", und: "pct" },
+  { desc: "Saco Lixo Colorado Reciclagem 100L 10un", und: "pct" },
+  { desc: "Pano de Chão 60x80cm", und: "un" },
+  { desc: "Pano de Prato Multiuso", und: "un" },
+  { desc: "Esponja Dupla Face", und: "un" },
+  { desc: "Esponja de Aço 8un", und: "pct" },
+  { desc: "Esponja Abrasiva Verde 3un", und: "pct" },
+  { desc: "Vassoura Cerdas Nylon", und: "un" },
+  { desc: "Vassoura Gari Pelo Longo", und: "un" },
+  { desc: "Rodo de Borracha 60cm", und: "un" },
+  { desc: "Rodo de Borracha 80cm", und: "un" },
+  { desc: "Mop Úmido com Cabo", und: "un" },
+  { desc: "Mop Seco Microfibra", und: "un" },
+  { desc: "Balde 10L", und: "un" },
+  { desc: "Balde com Espremedor 15L", und: "un" },
+  { desc: "Balde 20L", und: "un" },
+  { desc: "Luva Latex P", und: "par" },
+  { desc: "Luva Latex M", und: "par" },
+  { desc: "Luva Latex G", und: "par" },
+  { desc: "Avental Plástico Descartável", und: "un" },
+  { desc: "Dispenser Papel Toalha Parede", und: "un" },
+  { desc: "Dispenser Sabonete Líquido 800ml", und: "un" },
+  { desc: "Lixeira Basculante 15L", und: "un" },
+  { desc: "Lixeira Pedal 30L", und: "un" },
+  { desc: "Escova Vaso Sanitário com Suporte", und: "un" },
+  { desc: "Pá de Lixo com Cabo", und: "un" },
+  { desc: "Suporte Vassoura/Rodo Parede", und: "un" },
+  { desc: "Pano Microfibra 40x40cm", und: "un" },
+  { desc: "Pano Microfibra Kit 5un", und: "pct" },
+  { desc: "Fibra Abrasiva Rolo Verde 5m", und: "rolo" },
+  { desc: "Lustra-bota 100ml", und: "un" },
+  { desc: "Água Sanitária Galão 5L", und: "galão" },
+  { desc: "Copo Descartável 180ml cx/2500un", und: "cx" },
+  { desc: "Copo com Água Mineral 200ml cx/48", und: "cx" },
+  { desc: "Limpador Veja Multi-uso 500ml", und: "un" },
+  { desc: "Papel Higiênico Sublime Personal Fardo 64 rolos", und: "fardo" },
+  { desc: "Papel Toalha 2 Dobras Branco cx/1000 folhas", und: "cx" },
+  { desc: "Sabão de Coco Líquido Galão 5L", und: "galão" },
+  { desc: "Sabonete Líquido Refil 800ml", und: "un" },
+  { desc: "Saco para Lixo 20L c/100un", und: "pct" },
+  { desc: "Saco para Lixo 50L c/100un", und: "pct" },
+  { desc: "Saco para Lixo 100L c/100un", und: "pct" },
+  { desc: "Sapóleo Cremoso 300ml", und: "un" },
+  { desc: "Removedor 1L", und: "un" },
+  { desc: "Querosene 900ml", und: "un" },
+  { desc: "Desinfetante Galão 5L", und: "galão" },
+  { desc: "Álcool Gel Galão 5L", und: "galão" },
+  { desc: "Álcool 70% Frasco 1L", und: "un" },
+  { desc: "Vinagre de Álcool 2L", und: "un" },
+  { desc: "Lysoform 1L", und: "un" },
+  { desc: "Limpa Pedra Galão 5L", und: "galão" },
+  { desc: "Luva Nitrílica Descartável cx/100", und: "cx" },
+  { desc: "Registro Esfera Marrom Soldável 20mm 1/2\" (15mm)", und: "un" },
+  { desc: "Registro Esfera Marrom Soldável 25mm 3/4\" (20mm)", und: "un" },
+  { desc: "Registro Esfera Marrom Soldável 32mm 1\" (25mm)", und: "un" },
+  { desc: "Registro Esfera Marrom Soldável 40mm 1.1/4\" (32mm)", und: "un" },
+  { desc: "Registro Esfera Marrom Soldável 50mm 1.1/2\" (40mm)", und: "un" },
+  { desc: "Registro Esfera Marrom Soldável 60mm 2\" (50mm)", und: "un" },
+  { desc: "Registro Esfera Marrom Soldável 75mm 2.1/2\" (65mm)", und: "un" },
+  { desc: "Registro Esfera Marrom Soldável 85mm 3\" (85mm)", und: "un" },
+  { desc: "Registro Esfera Marrom Soldável 110mm 4\" (110mm)", und: "un" },
+  { desc: "Registro Esfera PVC Soldável+Rosca 20mm x 1/2\" (15mm)", und: "un" },
+  { desc: "Registro Esfera PVC Soldável+Rosca 25mm x 3/4\" (20mm)", und: "un" },
+  { desc: "Registro Esfera PVC Soldável+Rosca 32mm x 1\" (25mm)", und: "un" },
+  { desc: "Registro Esfera Latão Soldável 15mm", und: "un" },
+  { desc: "Registro Esfera Latão Soldável 22mm", und: "un" },
+  { desc: "Registro Esfera Latão Soldável 28mm", und: "un" },
+  { desc: "Disjuntor Monopolar 6A Curva C", und: "un" },
+  { desc: "Disjuntor Monopolar 16A Curva C", und: "un" },
+  { desc: "Disjuntor Monopolar 20A Curva C", und: "un" },
+  { desc: "Disjuntor Monopolar 25A Curva C", und: "un" },
+  { desc: "Disjuntor Monopolar 32A Curva C", und: "un" },
+  { desc: "Disjuntor Monopolar 40A Curva C", und: "un" },
+  { desc: "Disjuntor Monopolar 50A Curva C", und: "un" },
+  { desc: "Disjuntor Monopolar 63A Curva C", und: "un" },
+  { desc: "Disjuntor Bipolar 10A Curva C", und: "un" },
+  { desc: "Disjuntor Bipolar 16A Curva C", und: "un" },
+  { desc: "Disjuntor Bipolar 20A Curva C", und: "un" },
+  { desc: "Disjuntor Bipolar 25A Curva C", und: "un" },
+  { desc: "Disjuntor Bipolar 32A Curva C", und: "un" },
+  { desc: "Disjuntor Bipolar 40A Curva C", und: "un" },
+  { desc: "Disjuntor Bipolar 50A Curva C", und: "un" },
+  { desc: "Disjuntor Bipolar 63A Curva C", und: "un" },
+  { desc: "Disjuntor Tripolar 10A Curva C", und: "un" },
+  { desc: "Disjuntor Tripolar 20A Curva C", und: "un" },
+  { desc: "Disjuntor Tripolar 25A Curva C", und: "un" },
+  { desc: "Disjuntor Tripolar 32A Curva C", und: "un" },
+  { desc: "Disjuntor Tripolar 40A Curva C", und: "un" },
+  { desc: "Disjuntor Tripolar 50A Curva C", und: "un" },
+  { desc: "Disjuntor Tripolar 63A Curva C", und: "un" },
+  { desc: "Disjuntor Monopolar 10A Curva B", und: "un" },
+  { desc: "Disjuntor Monopolar 16A Curva B", und: "un" },
+  { desc: "Disjuntor Monopolar 20A Curva B", und: "un" },
+  { desc: "Disjuntor Monopolar 25A Curva B", und: "un" },
+  { desc: "Disjuntor Monopolar 32A Curva B", und: "un" },
+  { desc: "Disjuntor Bipolar 10A Curva B", und: "un" },
+  { desc: "Disjuntor Bipolar 16A Curva B", und: "un" },
+  { desc: "Disjuntor Bipolar 20A Curva B", und: "un" },
+  { desc: "Disjuntor Bipolar 25A Curva B", und: "un" },
+  { desc: "Disjuntor Bipolar 32A Curva B", und: "un" },
+  { desc: "Disjuntor Tripolar 16A Curva B", und: "un" },
+  { desc: "Disjuntor Tripolar 20A Curva B", und: "un" },
+  { desc: "Disjuntor Tripolar 25A Curva B", und: "un" },
+  { desc: "Disjuntor Tripolar 32A Curva B", und: "un" },
+  { desc: "DR Bipolar 25A 30mA Classe A", und: "un" },
+  { desc: "DR Bipolar 40A 30mA Classe A", und: "un" },
+  { desc: "DR Bipolar 63A 30mA Classe A", und: "un" },
+  { desc: "DR Tetrapolar 25A 30mA Classe A", und: "un" },
+  { desc: "DR Tetrapolar 40A 30mA Classe A", und: "un" },
+  { desc: "DR Tetrapolar 63A 30mA Classe A", und: "un" },
+  { desc: "DDR Bipolar 20A 30mA Curva C", und: "un" },
+  { desc: "DDR Bipolar 25A 30mA Curva C", und: "un" },
+  { desc: "DDR Bipolar 32A 30mA Curva C", und: "un" },
+  { desc: "DDR Tetrapolar 25A 30mA Curva C", und: "un" },
+  { desc: "DDR Tetrapolar 40A 30mA Curva C", und: "un" },
+  { desc: "Capacitor Ventilador Teto 3uF", und: "un" },
+  { desc: "Capacitor Ventilador Teto 4uF", und: "un" },
+  { desc: "Capacitor Ventilador Teto 5uF", und: "un" },
+  { desc: "Capacitor Ventilador Teto 6uF", und: "un" },
+  { desc: "Capacitor Ventilador Teto 7uF", und: "un" },
+  { desc: "Capacitor Ventilador Teto 8uF", und: "un" },
+  { desc: "Capacitor Ventilador Teto 10uF", und: "un" },
+  { desc: "Capacitor Motor Monofásico 12uF", und: "un" },
+  { desc: "Capacitor Motor Monofásico 16uF", und: "un" },
+  { desc: "Capacitor Motor Monofásico 20uF", und: "un" },
+  { desc: "Capacitor Motor Monofásico 25uF", und: "un" },
+  { desc: "Capacitor Motor Monofásico 30uF", und: "un" },
+  { desc: "Capacitor Motor Monofásico 40uF", und: "un" },
+  { desc: "Capacitor Motor Monofásico 50uF", und: "un" },
+  { desc: "Bateria Estacionária 7Ah 12V", und: "un" },
+  { desc: "Bateria Estacionária 12Ah 12V", und: "un" },
+  { desc: "Bateria Estacionária 17Ah 12V", und: "un" },
+  { desc: "Bateria Estacionária 24Ah 12V", und: "un" },
+  { desc: "Bateria Estacionária 40Ah 12V", und: "un" },
+  { desc: "Bateria Estacionária 60Ah 12V", und: "un" },
+  { desc: "Bateria Estacionária 100Ah 12V", und: "un" },
+  { desc: "Bateria Lítio 12V 20Ah", und: "un" },
+  { desc: "Carregador Bateria Estacionária 12V", und: "un" },
+  { desc: "Espuma Microfone Gooseneck TSI Linha MMS", und: "un" },
+  { desc: "Espuma Microfone Gooseneck TSI Linha MMF", und: "un" },
+  { desc: "Cabo Microfone XLR-XLR 3m", und: "un" },
+  { desc: "Cabo Microfone XLR-XLR 5m", und: "un" },
+  { desc: "Cabo Microfone XLR-XLR 10m", und: "un" },
+  { desc: "Cabo Microfone XLR-XLR 20m", und: "un" },
+  { desc: "Cabo Microfone XLR-P10 3m", und: "un" },
+  { desc: "Cabo Microfone XLR-P10 5m", und: "un" },
+  { desc: "Cabo Microfone Mesa de Som Multicore 8 vias 10m", und: "un" },
+  { desc: "Cabo Microfone Mesa de Som Multicore 16 vias 10m", und: "un" },
+  { desc: "Cabo Microfone Mesa de Som Multicore 24 vias 15m", und: "un" },
+  { desc: "Sensor Magnético Sem Fio SHC-FIT JFL", und: "un" },
+  { desc: "Sensor Magnético Com Fio Abertura Porta/Janela", und: "un" },
+  { desc: "Sensor Magnético Embutir Porta/Janela", und: "un" },
+  { desc: "Cimento CP II 50kg", und: "saco" },
+  { desc: "Cimento CP III 50kg", und: "saco" },
+  { desc: "Cimento CP IV 50kg", und: "saco" },
+  { desc: "Cimento CP V 50kg", und: "saco" },
+  { desc: "Cimento Branco 1kg", und: "un" },
+  { desc: "Cimento Branco 5kg", und: "saco" },
+  { desc: "Argamassa AC I Cinza 20kg", und: "saco" },
+  { desc: "Argamassa AC II Cinza 20kg", und: "saco" },
+  { desc: "Argamassa AC III Cinza 20kg", und: "saco" },
+  { desc: "Argamassa Multiuso Branca 20kg", und: "saco" },
+  { desc: "Rejunte Branco 1kg", und: "un" },
+  { desc: "Rejunte Cinza 1kg", und: "un" },
+  { desc: "Rejunte Cores 1kg", und: "un" },
+  { desc: "Rejunte Epóxi Bicomponente 1kg", und: "un" },
+  { desc: "Contrapiso Autonivelante 20kg", und: "saco" },
+  { desc: "PU Poliuretano Bi-componente 1kg", und: "un" },
+  { desc: "PU Impermeabilizante Telhado 3,6kg", und: "un" },
+  { desc: "PU Calafetador Cinza 400g", und: "un" },
+  { desc: "Espuma Expansiva 500ml", und: "un" },
+  { desc: "Espuma Expansiva 750ml", und: "un" },
+  { desc: "Espuma Expansiva Baixa Expansão 500ml", und: "un" },
+  { desc: "Silicone Neutro Branco 280g", und: "un" },
+  { desc: "Silicone Neutro Transparente 280g", und: "un" },
+  { desc: "Silicone Ácido Branco 280g", und: "un" },
+  { desc: "Silicone Sanitário Branco 280g", und: "un" },
+  { desc: "Silicone Alta Temperatura 300g", und: "un" },
+  { desc: "Silicone Estrutural Cinza 300g", und: "un" },
+  { desc: "Sifão Cozinha Garrafa 1.1/2\" (40mm) PVC", und: "un" },
+  { desc: "Sifão Pia Cozinha Extensível 1.1/2\" (40mm)", und: "un" },
+  { desc: "Sifão Lavatório Garrafa 1.1/4\" (32mm)", und: "un" },
+  { desc: "Sifão Lavatório Extensível 1.1/4\" (32mm)", und: "un" },
+  { desc: "Sifão Banheira 1.1/2\" (40mm)", und: "un" },
+  { desc: "Sifão Ralo Sifonado 10x10cm", und: "un" },
+  { desc: "Sifão Ralo Sifonado 15x15cm", und: "un" },
+  { desc: "Sifão Caixa Sifonada 20x20cm", und: "un" },
+  { desc: "Reparo Entrada Caixa Acoplada 1/2\" (15mm)", und: "un" },
+  { desc: "Reparo Saída Caixa Acoplada 3/4\" (20mm)", und: "un" },
+  { desc: "Kit Reparo Completo Caixa Acoplada", und: "kit" },
+  { desc: "Flap/Vedação Caixa Acoplada Universal", und: "un" },
+  { desc: "Tubo de Ligação Caixa Acoplada 40cm", und: "un" },
+  { desc: "Tubo de Ligação Caixa Acoplada 60cm", und: "un" },
+  { desc: "Assento/Tampa Vaso Sanitário PP Branco", und: "un" },
+  { desc: "Assento/Tampa Vaso Sanitário MDF Branco", und: "un" },
+  { desc: "Assento/Tampa Vaso Sanitário Soft Close", und: "un" },
+  { desc: "Parafuso Fixação Assento Vaso Sanitário", und: "un" },
+  { desc: "Reparo Válvula Descarga Deca 1.1/2\" (40mm)", und: "un" },
+  { desc: "Reparo Válvula Descarga Hydra 1.1/2\" (40mm)", und: "un" },
+  { desc: "Reparo Válvula Descarga Americana 1.1/2\" (40mm)", und: "un" },
+  { desc: "Reparo Válvula Descarga Universal 1.1/2\" (40mm)", und: "un" },
+  { desc: "Reparo Válvula Descarga Embutir Deca", und: "un" },
+  { desc: "Reparo Válvula Descarga Embutir Hydra", und: "un" },
+  { desc: "Válvula Descarga Completa Deca 1.1/2\" (40mm)", und: "un" },
+  { desc: "Válvula Descarga Completa Hydra 1.1/2\" (40mm)", und: "un" },
+  { desc: "Mictório Porcelana com Sifão", und: "un" },
+  { desc: "Mictório Louça Sem Sifão", und: "un" },
+  { desc: "Sifão para Mictório 3/4\" (20mm)", und: "un" },
+  { desc: "Grelha para Mictório Inox", und: "un" },
+  { desc: "Reparo Mictório com Registro", und: "un" },
+  { desc: "Válvula Descarga Mictório 3/4\" (20mm)", und: "un" },
+  { desc: "Torneira Automática Mictório 3/4\" (20mm)", und: "un" },
+  { desc: "Acionador Eletrônico Mictório", und: "un" },
+  { desc: "Torneira Pia Cozinha Bica Alta Cromada", und: "un" },
+  { desc: "Torneira Pia Cozinha Bica Baixa Cromada", und: "un" },
+  { desc: "Torneira Pia Cozinha Bica Móvel Cromada", und: "un" },
+  { desc: "Torneira Lavatório Banheiro 1/2\" (15mm)", und: "un" },
+  { desc: "Torneira Lavatório Automática Sensor", und: "un" },
+  { desc: "Torneira Parede Área Serviço 3/4\" (20mm)", und: "un" },
+  { desc: "Torneira Jardim Bico Longo 3/4\" (20mm)", und: "un" },
+  { desc: "Torneira Jardim com Rosca 3/4\" (20mm)", und: "un" },
+  { desc: "Torneira Elétrica Instantânea 220V", und: "un" },
+  { desc: "Torneira Elétrica Instantânea 110V", und: "un" },
+  { desc: "Torneira Mesa Cozinha Monocomando", und: "un" },
+  { desc: "Torneira Parede Banheiro Monocomando", und: "un" },
+  { desc: "Reparo Torneira Esfera 1/2\" (15mm)", und: "un" },
+  { desc: "Reparo Torneira Esfera 3/4\" (20mm)", und: "un" },
+  { desc: "Reparo Torneira Gaveta Macho 1/2\" (15mm)", und: "un" },
+  { desc: "Veda Rosca Torneira Teflon 18mm", und: "rolo" }
+];
+}
+
+function salvarBase() {
+  localStorage.setItem(BASE_KEY, JSON.stringify(baseItens));
+}
+
+// ===== CRIAÇÃO DAS LINHAS =====
+function criarLinhas() {
+  const tbody = document.getElementById('tbodyItens');
+  tbody.innerHTML = '';
+  for (let i = 1; i <= NUM_LINHAS; i++) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i}</td>
+      <td>
+        <div class="descricao-wrap">
+          <input type="text" class="inp-desc-item" data-row="${i}"
+            placeholder="Digite para buscar..."
+            autocomplete="off"
+            oninput="onDescInput(this, ${i})"
+            onkeydown="onDescKey(event, ${i})"
+            onblur="onDescBlur(${i})"
+          >
+          <div class="autocomplete-dropdown" id="drop_${i}"></div>
+        </div>
+      </td>
+      <td><input type="text" class="input-und" data-row="${i}" id="und_${i}" placeholder="UND"></td>
+      <td><input type="text" class="input-qntd" data-row="${i}" id="qntd_${i}" placeholder="Qtd"></td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+// ===== AUTOCOMPLETE =====
+function onDescInput(input, row) {
+  const val = input.value.trim();
+  const drop = document.getElementById(`drop_${row}`);
+  activeIndex = -1;
+
+  if (!val || val.length < 1) {
+    drop.classList.remove('show');
+    drop.innerHTML = '';
+    return;
+  }
+
+  const lower = val.toLowerCase();
+  const results = baseItens
+    .filter(it => it.desc.toLowerCase().includes(lower))
+    .slice(0, 12);
+
+  if (!results.length) {
+    drop.classList.remove('show');
+    drop.innerHTML = '';
+    return;
+  }
+
+  drop.innerHTML = results.map((it, idx) => `
+    <div class="autocomplete-item" id="acitem_${row}_${idx}"
+      onmousedown="selecionarItem(${row}, '${escJs(it.desc)}', '${escJs(it.und)}')"
+      onmouseover="setActiveIdx(${row}, ${idx}, ${results.length})">
+      <span class="item-nome">${highlight(it.desc, val)}</span>
+      <span class="item-und">${it.und}</span>
+    </div>
+  `).join('');
+
+  activeDropdown = row;
+  drop.classList.add('show');
+}
+
+function highlight(text, query) {
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx < 0) return text;
+  return text.substring(0, idx) +
+    `<span class="ac-highlight">${text.substring(idx, idx + query.length)}</span>` +
+    text.substring(idx + query.length);
+}
+
+function setActiveIdx(row, idx, total) {
+  for (let i = 0; i < total; i++) {
+    const el = document.getElementById(`acitem_${row}_${i}`);
+    if (el) el.classList.toggle('active', i === idx);
+  }
+  activeIndex = idx;
+}
+
+function onDescKey(event, row) {
+  const drop = document.getElementById(`drop_${row}`);
+  const items = drop.querySelectorAll('.autocomplete-item');
+  if (!items.length) return;
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    activeIndex = Math.min(activeIndex + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+    items[activeIndex]?.scrollIntoView({ block: 'nearest' });
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    activeIndex = Math.max(activeIndex - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+    items[activeIndex]?.scrollIntoView({ block: 'nearest' });
+  } else if (event.key === 'Enter' || event.key === 'Tab') {
+    if (activeIndex >= 0 && items[activeIndex]) {
+      event.preventDefault();
+      items[activeIndex].dispatchEvent(new MouseEvent('mousedown'));
+    }
+  } else if (event.key === 'Escape') {
+    drop.classList.remove('show');
+  }
+}
+
+function onDescBlur(row) {
+  setTimeout(() => {
+    const drop = document.getElementById(`drop_${row}`);
+    if (drop) drop.classList.remove('show');
+  }, 150);
+}
+
+function selecionarItem(row, desc, und) {
+  const inputDesc = document.querySelector(`.inp-desc-item[data-row="${row}"]`);
+  const inputUnd = document.getElementById(`und_${row}`);
+  if (inputDesc) inputDesc.value = desc;
+  if (inputUnd && und) inputUnd.value = und;
+  const drop = document.getElementById(`drop_${row}`);
+  if (drop) drop.classList.remove('show');
+  // Focar no campo quantidade
+  const qntd = document.getElementById(`qntd_${row}`);
+  if (qntd) qntd.focus();
+}
+
+function escJs(str) {
+  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+// ===== LIMPAR =====
+function limparFormulario() {
+  if (!confirm('Limpar todos os dados do formulário?')) return;
+  document.querySelectorAll('#ministeriosLista input').forEach(c => c.checked = false);
+  document.querySelectorAll('.categorias-lista input').forEach(c => c.checked = false);
+  document.getElementById('dataSolicitacao').value = '';
+  document.getElementById('nomeSolicitante').value = '';
+  document.getElementById('observacao').value = '';
+  for (let i = 1; i <= NUM_LINHAS; i++) {
+    const d = document.querySelector(`.inp-desc-item[data-row="${i}"]`);
+    const u = document.getElementById(`und_${i}`);
+    const q = document.getElementById(`qntd_${i}`);
+    if (d) d.value = '';
+    if (u) u.value = '';
+    if (q) q.value = '';
+  }
+}
+
+// ===== IMPRIMIR =====
+function imprimir() {
+  construirPrintForm();
+  window.print();
+}
+
+function construirPrintForm() {
+  // Ministérios
+  const ministeriosAll = [
+    ['NOVA VINHEDO', 'min0'],
+    ['JARDIM BELA VISTA', 'min1'],
+    ['VILA PLANALTO', 'min2'],
+    ['PARQUE IOLANDA', 'min3'],
+    ['RESIDENCIAL VIDA NOVA I', 'min4'],
+    ['CHÁCARA LÍRIO DOS CAMPOS', 'min5'],
+    ['JARDIM MIRIAM', 'min6'],
+  ];
+  const pfMin = document.getElementById('pf-ministerios');
+  pfMin.innerHTML = ministeriosAll.map(([label, id]) => {
+    const checked = document.getElementById(id)?.checked;
+    return `<div class="pf-min-item">
+      <div class="pf-checkbox">${checked ? '✓' : ''}</div>
+      <span>${label}</span>
+    </div>`;
+  }).join('');
+
+  // Categorias
+  const categoriasAll = [
+    ['CONSTRUÇÃO', 'cat0'],
+    ['REFORMA', 'cat1'],
+    ['MANUTENÇÃO', 'cat2'],
+    ['OUTROS', 'cat3'],
+  ];
+  const pfCat = document.getElementById('pf-categorias');
+  pfCat.innerHTML = categoriasAll.map(([label, id]) => {
+    const checked = document.getElementById(id)?.checked;
+    return `<div class="pf-cat-item">
+      <div class="pf-checkbox">${checked ? '✓' : ''}</div>
+      <span>${label}</span>
+    </div>`;
+  }).join('');
+
+  // Data
+  const dataVal = document.getElementById('dataSolicitacao').value;
+  let dataStr = '_____ / ______ / ________';
+  if (dataVal) {
+    const [y, m, d] = dataVal.split('-');
+    dataStr = `${d} / ${m} / ${y}`;
+  }
+  document.getElementById('pf-data-sol').textContent = dataStr;
+
+  // Nome
+  document.getElementById('pf-nome-sol').textContent =
+    document.getElementById('nomeSolicitante').value || '';
+
+  // Tabela itens
+  const tbody = document.getElementById('pf-tbody');
+  let rows = '';
+  for (let i = 1; i <= NUM_LINHAS; i++) {
+    const desc = document.querySelector(`.inp-desc-item[data-row="${i}"]`)?.value || '';
+    const und = document.getElementById(`und_${i}`)?.value || '';
+    const qntd = document.getElementById(`qntd_${i}`)?.value || '';
+    rows += `<tr>
+      <td class="td-num">${i}</td>
+      <td class="td-desc">${desc}</td>
+      <td class="td-und">${und}</td>
+      <td class="td-qtd">${qntd}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = rows;
+
+  // Observação
+  document.getElementById('pf-obs-text').textContent =
+    document.getElementById('observacao').value || '';
+}
+
+// ===== MODAL BASE =====
+function abrirBase() {
+  renderBaseTable();
+  document.getElementById('modalBase').classList.add('open');
+  document.getElementById('searchBase').value = '';
+  document.getElementById('novoItemDesc').value = '';
+  document.getElementById('novoItemUnd').value = '';
+}
+
+function fecharBase() {
+  document.getElementById('modalBase').classList.remove('open');
+}
+
+function filtrarBase() {
+  renderBaseTable(document.getElementById('searchBase').value);
+}
+
+function renderBaseTable(filtro = '') {
+  const lower = filtro.toLowerCase();
+  const tbody = document.getElementById('baseTableBody');
+  const filtered = baseItens.filter(it =>
+    it.desc.toLowerCase().includes(lower) || it.und.toLowerCase().includes(lower)
+  );
+  tbody.innerHTML = filtered.map((it, i) => {
+    const realIdx = baseItens.indexOf(it);
+    return `<tr>
+      <td>${it.desc}</td>
+      <td style="text-align:center">${it.und}</td>
+      <td><button class="btn-del" onclick="removerItemBase(${realIdx})">Remover</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function removerItemBase(idx) {
+  if (!confirm(`Remover "${baseItens[idx].desc}"?`)) return;
+  baseItens.splice(idx, 1);
+  salvarBase();
+  filtrarBase();
+}
+
+function adicionarItemBase() {
+  const desc = document.getElementById('novoItemDesc').value.trim();
+  const und = document.getElementById('novoItemUnd').value.trim().toUpperCase();
+  if (!desc) { alert('Informe a descrição do item.'); return; }
+  if (!und) { alert('Informe a unidade.'); return; }
+  if (baseItens.some(it => it.desc.toLowerCase() === desc.toLowerCase())) {
+    alert('Item já existe na base.'); return;
+  }
+  baseItens.push({ desc, und });
+  baseItens.sort((a, b) => a.desc.localeCompare(b.desc, 'pt-BR'));
+  salvarBase();
+  document.getElementById('novoItemDesc').value = '';
+  document.getElementById('novoItemUnd').value = '';
+  filtrarBase();
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('modalBase').addEventListener('click', function(e) {
+  if (e.target === this) fecharBase();
+});
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', function(e) {
+  if (activeDropdown && !e.target.closest('.descricao-wrap')) {
+    const drop = document.getElementById(`drop_${activeDropdown}`);
+    if (drop) drop.classList.remove('show');
+    activeDropdown = null;
+  }
+});
+
+// ===== FIREBASE CONFIG =====
 const FB_KEY     = 'AIzaSyCVgaDZ3O6ZSRqZIahkdk3wXQw-f1B1CAg';
 const FB_PROJECT = 'ccb-vinhedo';
 const FB_BASE    = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents/dados`;
-const FS_DOC     = `${FB_BASE}/ccb-local?key=${FB_KEY}`;   // documento principal (dados existentes)
-const LOCAL_KEY  = 'ccb_req_v1';
+const FS_DOC     = `${FB_BASE}/ccb-local?key=${FB_KEY}`;
+const LOCAL_DB_KEY = 'ccb_req_v2';
 
-/* ══════════════════════════════════════
-   ESTADO
-══════════════════════════════════════ */
-let DB = { requisicoes:[], solicitantes:[], itens:[], counter:0 };
+// ===== ESTADO REQUISIÇÕES =====
+let DB = { requisicoes: [], solicitantes: [], counter: 0 };
 let _salvando = false;
+let _debTimer = null;
+let assIdx = null, assEmpty = true;
 
-/* ══════════════════════════════════════
-   INDICADOR DE SYNC
-══════════════════════════════════════ */
+// ===== SYNC DOT =====
 function setDot(estado) {
-  // estado: 'ok' | 'off' | 'busy'
-  const d = $('tbDot');
+  const d = document.getElementById('syncDot');
+  const t = document.getElementById('syncTxt');
   if (!d) return;
-  d.style.background = estado === 'ok' ? '#6ee7b7' : estado === 'busy' ? '#fbbf24' : '#f87171';
-  d.title = estado === 'ok' ? 'Online · sincronizado' : estado === 'busy' ? 'Salvando...' : 'Offline · dados locais';
+  const map = { ok: ['#6ee7b7','Online · sincronizado'], off: ['#f87171','Offline · local'], busy: ['#fbbf24','Salvando...'] };
+  const [cor, txt] = map[estado] || map.off;
+  d.style.background = cor;
+  if (t) t.textContent = txt;
 }
 
-/* ══════════════════════════════════════
-   LOCAL — backup sempre atualizado
-══════════════════════════════════════ */
+// ===== LOCAL =====
 function salvarLocal() {
-  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(DB)); } catch(e) {}
+  try { localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(DB)); } catch(e) {}
 }
 function carregarLocal() {
-  try { const s = localStorage.getItem(LOCAL_KEY); if (s) DB = JSON.parse(s); } catch(e) {}
+  try { const s = localStorage.getItem(LOCAL_DB_KEY); if (s) DB = JSON.parse(s); } catch(e) {}
 }
 
-/* ══════════════════════════════════════
-   FIREBASE — ler
-══════════════════════════════════════ */
-async function carregarFirebase() {
+// ===== FIREBASE LEITURA =====
+async function carregarFirebase(showToastOk = false) {
   try {
+    setDot('busy');
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 8000);
     const r = await fetch(FS_DOC, { signal: ctrl.signal });
     clearTimeout(t);
-    if (r.status === 404) { return true; } // documento ainda não existe — ok
+    if (r.status === 404) { setDot('ok'); return true; }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const json = await r.json();
-
-    // Suporta campo 'dados' (formato antigo ccb-local) e campo direto
     const raw = json.fields?.dados?.stringValue;
     if (raw) {
       const remoto = JSON.parse(raw);
-      // Normaliza campos: suporte ao schema antigo (itensCadastrados) e novo (itens)
       DB = {
-        requisicoes:      remoto.requisicoes      || [],
-        solicitantes:     remoto.solicitantes      || [],
-        itens:            remoto.itens             || remoto.itensCadastrados || [],
-        counter:          remoto.reqCounter        || remoto.counter          || 0,
+        requisicoes:  remoto.requisicoes  || [],
+        solicitantes: remoto.solicitantes || [],
+        counter:      remoto.reqCounter   || remoto.counter || 0,
       };
       salvarLocal();
     }
+    setDot('ok');
+    atualizarNumReq();
+    if (showToastOk) showToast('✅ Sincronizado!');
     return true;
   } catch(e) {
+    setDot('off');
     return false;
   }
 }
 
-/* ══════════════════════════════════════
-   FIREBASE — gravar (debounce 300ms)
-══════════════════════════════════════ */
-let _debTimer = null;
-function salvar() {
-  salvarLocal(); // salva local imediatamente — nunca perde dados
+// ===== FIREBASE GRAVAÇÃO (debounce) =====
+function salvarFirebase() {
+  salvarLocal();
   clearTimeout(_debTimer);
   _debTimer = setTimeout(async () => {
     if (_salvando) return;
     _salvando = true;
     setDot('busy');
     try {
-      // Grava no mesmo formato do documento ccb-local existente
-      const payload = {
-        requisicoes:  DB.requisicoes,
-        solicitantes: DB.solicitantes,
-        itens:        DB.itens,
-        reqCounter:   DB.counter,   // mantém compatibilidade com campo antigo
-        counter:      DB.counter,
-      };
+      const payload = { requisicoes: DB.requisicoes, solicitantes: DB.solicitantes, reqCounter: DB.counter, counter: DB.counter };
       const body = { fields: { dados: { stringValue: JSON.stringify(payload) } } };
-      const r = await fetch(FS_DOC, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
+      const r = await fetch(FS_DOC, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       setDot('ok');
     } catch(e) {
@@ -521,997 +1824,507 @@ function salvar() {
     } finally {
       _salvando = false;
     }
-  }, 300);
+  }, 400);
 }
 
-/* ══════════════════════════════════════
-   CARREGAR DADOS (início + refresh)
-══════════════════════════════════════ */
-async function carregar(showT=false) {
-  carregarLocal();
-  inicializarUI();
-  setDot('busy');
-  const ok = await carregarFirebase();
-  if (ok) {
-    setDot('ok');
-    inicializarUI();
-    if (showT) showToast('✅ Sincronizado!');
-  } else {
-    setDot('off');
-    showToast('📶 Offline — usando dados locais.');
+// ===== SALVAR REQUISIÇÃO ATUAL =====
+function salvarESalvar() {
+  // Coletar dados do formulário
+  const dataSol = document.getElementById('dataSolicitacao').value;
+  const nome    = document.getElementById('nomeSolicitante').value.trim();
+
+  // Ministérios selecionados
+  const ministeriosAll = ['NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA','RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'];
+  const ministerios = ministeriosAll.filter((_, i) => document.getElementById('min'+i)?.checked);
+
+  // Categorias selecionadas
+  const categoriasAll = ['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'];
+  const categorias = categoriasAll.filter((_, i) => document.getElementById('cat'+i)?.checked);
+
+  if (!nome) { showToast('⚠️ Informe o nome do solicitante!'); return; }
+  if (!ministerios.length && !categorias.length) { showToast('⚠️ Selecione ministério ou categoria!'); return; }
+
+  // Coletar itens
+  const itens = [];
+  for (let i = 1; i <= NUM_LINHAS; i++) {
+    const desc = document.querySelector(`.inp-desc-item[data-row="${i}"]`)?.value?.trim() || '';
+    const und  = document.getElementById(`und_${i}`)?.value?.trim() || '';
+    const qtd  = document.getElementById(`qntd_${i}`)?.value?.trim() || '';
+    if (desc) itens.push({ desc, und, qtd });
   }
-  return ok;
-}
-
-function inicializarUI() {
-  atualizarNum();
-  atualizarSolDropdown();
-  atualizarDatalist();
-  atualizarBadge();
-  // Re-renderizar tela ativa
-  const ativa = document.querySelector('.screen.on');
-  if (ativa?.id === 'sc-lista') renderLista();
-  if (ativa?.id === 'sc-cad')  { renderSol(); renderItens(); }
-}
-
-/* ══════════════════════════════════════
-   HELPERS
-══════════════════════════════════════ */
-const $ = id => document.getElementById(id);
-const fN = n => n ? String(n).padStart(4,'0') : '—';
-const fM = v => 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
-const fD = v => { if(!v) return '—'; const [y,m,d]=v.split('-'); return `${d}/${m}/${y}`; };
-const d3 = () => { const d=new Date(); d.setDate(d.getDate()+3); return d.toISOString().split('T')[0]; };
-
-function showToast(msg, dur=3000) {
-  const t = $('toast');
-  t.textContent = msg;
-  t.className = 'toast on';
-  clearTimeout(t._t);
-  t._t = setTimeout(() => t.className = 'toast', dur);
-}
-
-/* ══════════════════════════════════════
-   NAVEGAÇÃO
-══════════════════════════════════════ */
-function goTo(name, btn) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
-  document.querySelectorAll('.bn').forEach(b => b.classList.remove('on'));
-  $('sc-'+name).classList.add('on');
-  btn.classList.add('on');
-  if (name === 'lista') renderLista();
-  if (name === 'cad') { renderSol(); renderItens(); }
-  if (name === 'nova') { atualizarNum(); atualizarSolDropdown(); }
-}
-
-/* ══════════════════════════════════════
-   MODAIS
-══════════════════════════════════════ */
-function openOv(id) { $(id).classList.add('on'); document.body.style.overflow='hidden'; }
-function closeOv(id) { $(id).classList.remove('on'); document.body.style.overflow=''; }
-function ovClose(e, id) { if (e.target === $(id)) closeOv(id); }
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { document.querySelectorAll('.ov.on').forEach(o => o.classList.remove('on')); document.body.style.overflow=''; }
-});
-
-/* ══════════════════════════════════════
-   CADASTRO — SOLICITANTES
-══════════════════════════════════════ */
-let editSolIdx = null;
-
-function addSol() {
-  const inp = $('inpSol');
-  const nome = (inp.value || '').trim();
-  if (!nome) { showToast('⚠️ Digite um nome!'); return; }
-  if (editSolIdx !== null) {
-    DB.solicitantes[editSolIdx] = nome;
-    editSolIdx = null;
-  } else {
-    DB.solicitantes.push(nome);
-  }
-  salvar();
-  inp.value = '';
-  renderSol();
-  atualizarSolDropdown();
-  showToast('✅ Solicitante salvo!');
-}
-
-function editSol(i) {
-  editSolIdx = i;
-  const inp = $('inpSol');
-  inp.value = DB.solicitantes[i];
-  inp.focus();
-  inp.select();
-  const btn = $('btnAddSol');
-  if (btn) { btn.textContent = '✔ Salvar'; btn.className = 'btn btn-gold btn-sm'; }
-  const cw = $('cancelSolWrap'); if (cw) cw.style.display = 'block';
-  renderSol();
-}
-
-function cancelEditSol() {
-  editSolIdx = null;
-  $('inpSol').value = '';
-  const btn = $('btnAddSol');
-  if (btn) { btn.textContent = '＋ Adicionar'; btn.className = 'btn btn-gold btn-sm'; }
-  const cw = $('cancelSolWrap'); if (cw) cw.style.display = 'none';
-  renderSol();
-}
-
-function delSol(i) {
-  if (!confirm('Excluir "' + DB.solicitantes[i] + '"?')) return;
-  DB.solicitantes.splice(i, 1);
-  if (editSolIdx === i) cancelEditSol();
-  else { salvar(); renderSol(); atualizarSolDropdown(); }
-}
-
-function renderSol() {
-  const div = $('listaSol');
-  const cnt = $('cntSol');
-  if (cnt) cnt.textContent = DB.solicitantes.length + ' cadastrado(s)';
-  if (!DB.solicitantes.length) {
-    div.innerHTML = '<p style="font-size:13px;color:var(--text3);text-align:center;padding:10px 0;">Nenhum cadastrado.</p>';
-    return;
-  }
-  div.innerHTML = DB.solicitantes.map((s,i) => `
-    <div class="cad-row${editSolIdx===i?' cad-editing':''}">
-      <span class="cad-name">${editSolIdx===i?'<strong>✏️ '+s+'</strong>':s}</span>
-      <div class="cad-acts">
-        <button class="btn btn-secondary btn-sm" onclick="editSol(${i})">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="delSol(${i})">🗑</button>
-      </div>
-    </div>`).join('');
-}
-
-/* ══════════════════════════════════════
-   CADASTRO — ITENS
-══════════════════════════════════════ */
-let editItemIdx = null;
-
-function addItemCad() {
-  const nome = ($('inpItemNome').value || '').trim();
-  const und  = ($('inpItemUnd').value  || '').trim();
-  if (!nome) { showToast('⚠️ Digite o nome do item!'); return; }
-  if (editItemIdx !== null) {
-    DB.itens[editItemIdx] = { nome, und };
-    editItemIdx = null;
-  } else {
-    DB.itens.push({ nome, und });
-  }
-  salvar();
-  $('inpItemNome').value = '';
-  $('inpItemUnd').value  = '';
-  const btn = $('btnAddItem');
-  if (btn) { btn.textContent = '＋'; btn.className = 'btn btn-gold btn-sm'; }
-  renderItens();
-  atualizarDatalist();
-  showToast('✅ Item salvo!');
-}
-
-function editItemCad(i) {
-  editItemIdx = i;
-  $('inpItemNome').value = DB.itens[i].nome;
-  $('inpItemUnd').value  = DB.itens[i].und || '';
-  $('inpItemNome').focus();
-  $('inpItemNome').select();
-  const btn = $('btnAddItem');
-  if (btn) { btn.textContent = '✔'; btn.className = 'btn btn-gold btn-sm'; }
-  const cw = $('cancelItemWrap'); if (cw) cw.style.display = 'block';
-  renderItens();
-}
-
-function cancelEditItem() {
-  editItemIdx = null;
-  $('inpItemNome').value = '';
-  $('inpItemUnd').value  = '';
-  const btn = $('btnAddItem');
-  if (btn) { btn.textContent = '＋'; btn.className = 'btn btn-gold btn-sm'; }
-  const cw = $('cancelItemWrap'); if (cw) cw.style.display = 'none';
-  renderItens();
-}
-
-function delItemCad(i) {
-  if (!confirm('Excluir "' + DB.itens[i].nome + '"?')) return;
-  DB.itens.splice(i, 1);
-  if (editItemIdx === i) cancelEditItem();
-  else { salvar(); renderItens(); atualizarDatalist(); }
-}
-
-function renderItens() {
-  const div = $('listaItens');
-  const cnt = $('cntItens');
-  if (cnt) cnt.textContent = DB.itens.length + ' cadastrado(s)';
-  if (!DB.itens.length) {
-    div.innerHTML = '<p style="font-size:13px;color:var(--text3);text-align:center;padding:10px 0;">Nenhum cadastrado.</p>';
-    return;
-  }
-  div.innerHTML = DB.itens.map((it,i) => `
-    <div class="cad-row${editItemIdx===i?' cad-editing':''}">
-      <div>
-        <div class="cad-name">${editItemIdx===i?'<strong>✏️ '+it.nome+'</strong>':it.nome}</div>
-        <div class="cad-sub">${it.und||'—'}</div>
-      </div>
-      <div class="cad-acts">
-        <button class="btn btn-secondary btn-sm" onclick="editItemCad(${i})">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="delItemCad(${i})">🗑</button>
-      </div>
-    </div>`).join('');
-}
-
-/* ══════════════════════════════════════
-   IMPORTAR XLSX
-══════════════════════════════════════ */
-let importTipo = '', importBuf = [];
-
-function abrirImport(tipo) {
-  importTipo = tipo; importBuf = [];
-  $('importPreview').innerHTML = '';
-  $('fileIn').value = '';
-  $('btnImport').style.display = 'none';
-  if (tipo === 'sol') {
-    $('importTitle').textContent = '📥 Importar Solicitantes';
-    $('importInstr').innerHTML = '<strong>Formato:</strong> Coluna A = Nome do solicitante.<br>A 1ª linha pode ser cabeçalho.';
-  } else {
-    $('importTitle').textContent = '📥 Importar Itens';
-    $('importInstr').innerHTML = '<strong>Formato:</strong> Coluna A = Nome do item · Coluna B = Unidade.<br>Exemplo: Cimento CP-II | sc';
-  }
-  openOv('ovImport');
-}
-
-function handleDrop(e) { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) handleFile(f); }
-
-function handleFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const wb = XLSX.read(ev.target.result, {type:'array'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-    importBuf = [];
-    rows.forEach((r,i) => {
-      const a = String(r[0]||'').trim();
-      const b = String(r[1]||'').trim();
-      if (i===0 && (a.toLowerCase().includes('nome')||a.toLowerCase()==='item')) return;
-      if (!a) return;
-      importBuf.push({ nome:a, und:b });
-    });
-    if (!importBuf.length) { $('importPreview').innerHTML='<p style="color:var(--danger);padding:8px 0;font-size:13px;">Nenhum dado encontrado.</p>'; return; }
-    let h = `<p style="font-size:12px;color:var(--text3);padding:6px 0;">${importBuf.length} registro(s)</p><div class="import-prev"><table><thead><tr><th>Nome</th>${importTipo==='item'?'<th>Unid.</th>':''}</tr></thead><tbody>`;
-    importBuf.forEach(it => { h += `<tr><td>${it.nome}</td>${importTipo==='item'?`<td>${it.und||'—'}</td>`:''}</tr>`; });
-    h += '</tbody></table></div>';
-    $('importPreview').innerHTML = h;
-    $('btnImport').style.display = 'flex';
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function confirmarImport() {
-  let novos = 0;
-  if (importTipo === 'sol') {
-    importBuf.forEach(it => {
-      if (!DB.solicitantes.find(s => s.toLowerCase()===it.nome.toLowerCase())) { DB.solicitantes.push(it.nome); novos++; }
-    });
-  } else {
-    importBuf.forEach(it => {
-      if (!DB.itens.find(s => s.nome.toLowerCase()===it.nome.toLowerCase())) { DB.itens.push({nome:it.nome,und:it.und||''}); novos++; }
-    });
-  }
-  salvar();
-  closeOv('ovImport');
-  renderSol(); renderItens(); atualizarSolDropdown(); atualizarDatalist();
-  showToast(`✅ ${novos} importado(s)!`);
-}
-
-/* ══════════════════════════════════════
-   DROPDOWNS / DATALIST
-══════════════════════════════════════ */
-function atualizarSolDropdown() {
-  const sel = $('fSol'); if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Selecione...</option>' + DB.solicitantes.map(s=>`<option>${s}</option>`).join('');
-  sel.value = cur;
-}
-
-function atualizarDatalist() {
-  const dl = $('dlItens'); if (!dl) return;
-  dl.innerHTML = DB.itens.map(it=>`<option value="${it.nome}">`).join('');
-}
-
-function getUnd(nome) {
-  const f = DB.itens.find(it => it.nome.toLowerCase()===nome.toLowerCase());
-  return f ? f.und : '';
-}
-
-function atualizarNum() {
-  $('numDisplay').textContent = fN(DB.counter + 1);
-}
-
-/* ══════════════════════════════════════
-   ITENS DA REQUISIÇÃO
-══════════════════════════════════════ */
-function addItem() {
-  const c = $('itensContainer');
-  const div = document.createElement('div');
-  div.className = 'item-card';
-  div.innerHTML = `
-    <div class="ir1">
-      <input list="dlItens" class="ii" placeholder="Descrição do item" onchange="autoUnd(this)" oninput="autoUnd(this)">
-      <input class="ii ii-und" placeholder="Unid.">
-      <button type="button" class="it-del" onclick="this.closest('.item-card').remove();calcTotal();syncEmpty();">✕</button>
-    </div>
-    <div class="ir2">
-      <input type="number" class="ii" placeholder="Qtd" value="1" min="0" oninput="calcTotal()">
-      <input type="number" class="ii" placeholder="R$ unit." step="0.01" min="0" oninput="calcTotal()">
-      <span class="it-total">R$ 0,00</span>
-    </div>`;
-  c.appendChild(div);
-  syncEmpty();
-  div.querySelector('.ir1 .ii').focus();
-}
-
-function autoUnd(inp) {
-  const u = getUnd(inp.value);
-  if (u) inp.closest('.ir1').querySelector('.ii-und').value = u;
-}
-
-function calcTotal() {
-  let t = 0;
-  document.querySelectorAll('#itensContainer .item-card').forEach(card => {
-    const ins = card.querySelectorAll('input');
-    const q = parseFloat(ins[2]?.value||0), c = parseFloat(ins[3]?.value||0), sub = q*c;
-    t += sub;
-    const lbl = card.querySelector('.it-total');
-    if (lbl) lbl.textContent = fM(sub);
-  });
-  $('totalGeral').textContent = fM(t);
-}
-
-function syncEmpty() {
-  const e = $('itensEmpty');
-  const has = document.querySelectorAll('#itensContainer .item-card').length > 0;
-  if (e) e.style.display = has ? 'none' : 'block';
-}
-
-/* ══════════════════════════════════════
-   SALVAR / EDITAR REQUISIÇÃO
-══════════════════════════════════════ */
-let editIdx = null;
-
-function salvarReq() {
-  const data   = $('fData').value;
-  const igreja = $('fIgreja').value;
-  const cat    = $('fCat').value;
-  const sol    = $('fSol').value;
-  if (!data||!igreja||!cat||!sol) { showToast('⚠️ Preencha todos os campos!'); return; }
-
-  const itens = []; let totalG = 0;
-  document.querySelectorAll('#itensContainer .item-card').forEach(card => {
-    const ins = card.querySelectorAll('input');
-    const desc  = ins[0]?.value || '';
-    const und   = ins[1]?.value || '';
-    const qtd   = parseFloat(ins[2]?.value||0);
-    const custo = parseFloat(ins[3]?.value||0);
-    totalG += qtd * custo;
-    if (desc) itens.push({ desc, und, qtd, custo });
-  });
   if (!itens.length) { showToast('⚠️ Adicione ao menos um item!'); return; }
 
-  if (editIdx !== null) {
-    const orig = DB.requisicoes[editIdx];
-    DB.requisicoes[editIdx] = { ...orig, data, igreja, categoria:cat, solicitante:sol, itens, totalG };
-    salvar();
-    showToast('✅ Req. ' + fN(orig.num) + ' atualizada!');
-    editIdx = null;
-  } else {
-    DB.counter++;
-    DB.requisicoes.push({ id:Date.now(), num:DB.counter, data, igreja, categoria:cat, solicitante:sol, itens, totalG,
-      sigMin:null, nomeMin:'', sigTec:null, nomeTec:'', sigMan:null, nomeMan:'' });
-    salvar();
-    showToast('✅ Requisição ' + fN(DB.counter) + ' salva!');
-  }
-  limpar();
-  atualizarBadge();
+  const obs = document.getElementById('observacao').value.trim();
+
+  DB.counter++;
+  const req = {
+    id: Date.now(),
+    num: DB.counter,
+    dataSolicitacao: dataSol,
+    nomeSolicitante: nome,
+    ministerios,
+    categorias,
+    itens,
+    obs,
+    sigMin: null, nomeMin: '',
+    sigTec: null, nomeTec: '',
+    sigMan: null, nomeMan: '',
+    criadoEm: new Date().toISOString()
+  };
+  DB.requisicoes.push(req);
+  salvarFirebase();
+  atualizarNumReq();
+  showToast('✅ Requisição Nº ' + fN(req.num) + ' salva!');
 }
 
-function limpar() {
-  $('fData').value = d3();
-  $('fIgreja').value = '';
-  $('fCat').value = '';
-  $('fSol').value = '';
-  $('itensContainer').innerHTML = '';
-  $('totalGeral').textContent = 'R$ 0,00';
-  $('lblSalvar').textContent = '💾 Salvar Requisição';
-  $('numDisplay').textContent = fN(DB.counter+1);
-  syncEmpty(); editIdx = null;
+// ===== NÚMERO =====
+function atualizarNumReq() {
+  const el = document.getElementById('numReqDisplay');
+  if (el) el.textContent = fN(DB.counter + 1);
+}
+function fN(n) { return String(n||0).padStart(4,'0'); }
+function fD(v) { if(!v) return '—'; const [y,m,d]=v.split('-'); return `${d}/${m}/${y}`; }
+
+// ===== COMPARTILHAR =====
+function compartilharApp() {
+  const url = window.location.href.split('?')[0];
+  const txt = encodeURIComponent('*CCB Adm Vinhedo – Requisição de Compras*\n\nAcesse o formulário:\n' + url);
+  window.open('https://wa.me/?text=' + txt, '_blank');
 }
 
-/* ══════════════════════════════════════
-   EDITAR REQUISIÇÃO
-══════════════════════════════════════ */
-function editarReq(idx) {
-  const r = DB.requisicoes[idx];
-  editIdx = idx;
-  goTo('nova', $('bn-nova'));
-  setTimeout(() => {
-    $('fData').value   = r.data || d3();
-    $('fIgreja').value = r.igreja || '';
-    $('fCat').value    = r.categoria || '';
-    atualizarSolDropdown();
-    $('fSol').value    = r.solicitante || '';
-    $('itensContainer').innerHTML = '';
-    (r.itens||[]).forEach(it => {
-      addItem();
-      const cards = document.querySelectorAll('#itensContainer .item-card');
-      const last  = cards[cards.length-1];
-      const ins   = last.querySelectorAll('input');
-      ins[0].value = it.desc||''; ins[1].value = it.und||'';
-      ins[2].value = it.qtd||0;   ins[3].value = it.custo||0;
-    });
-    calcTotal(); syncEmpty();
-    $('numDisplay').textContent = fN(r.num) + ' ✏️';
-    $('lblSalvar').textContent  = '💾 Salvar Edição';
-    showToast('✏️ Editando Req. ' + fN(r.num));
-  }, 60);
+// ===== TOAST =====
+function showToast(msg, dur=3500) {
+  const t = document.getElementById('toastMsg');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._tt);
+  t._tt = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; }, dur);
 }
 
-/* ══════════════════════════════════════
-   BADGE
-══════════════════════════════════════ */
-function atualizarBadge() {
-  const pend = DB.requisicoes.filter(r => !r.sigMin||!r.sigTec||!r.sigMan).length;
-  const b = $('badgePend');
-  if (!b) return;
-  b.style.display = pend > 0 ? 'flex' : 'none';
-  b.textContent = pend;
+// ===== LISTA DE REQUISIÇÕES =====
+function abrirListaReqs() {
+  document.getElementById('modalLista').style.display = 'flex';
+  renderListaReqs();
 }
+function fecharModalLista() {
+  document.getElementById('modalLista').style.display = 'none';
+}
+document.getElementById('modalLista').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalLista();
+});
 
-/* ══════════════════════════════════════
-   LISTAGEM
-══════════════════════════════════════ */
-function renderLista() {
-  const wrap = $('listaWrap'); if (!wrap) return;
-  const sub  = $('listaSub');
-
-  const banner = `
-    <div class="share-banner">
-      <div class="share-txt"><strong>Compartilhar App</strong><span>Envie o link para outros usuários</span></div>
-      <button class="btn-wa" onclick="compartilhar()">
-        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.532 5.859L.057 23.57a.75.75 0 00.92.921l5.753-1.476A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.713 9.713 0 01-4.953-1.355l-.355-.211-3.668.941.963-3.595-.232-.372A9.712 9.712 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
-        Link
-      </button>
-    </div>`;
-
+function renderListaReqs() {
+  const body = document.getElementById('listaReqsBody');
   if (!DB.requisicoes.length) {
-    if (sub) sub.textContent = 'Nenhuma requisição';
-    wrap.innerHTML = banner + '<div class="empty"><div class="empty-ico">📋</div><div class="empty-txt">Nenhuma requisição ainda.</div></div>';
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:#999;"><div style="font-size:2rem;margin-bottom:8px;">📋</div><div>Nenhuma requisição salva.</div></div>';
     return;
   }
-
-  if (sub) sub.textContent = DB.requisicoes.length + ' requisição(ões)';
   const reqs = [...DB.requisicoes].reverse();
-
-  const cards = reqs.map((r, ri) => {
+  body.innerHTML = reqs.map((r, ri) => {
     const realIdx = DB.requisicoes.length - 1 - ri;
-    const tot = (r.itens||[]).reduce((s,it)=>s+it.qtd*it.custo, 0);
-    const ok  = r.sigMin && r.sigTec && r.sigMan;
-    const sd  = (done,lbl) => `<div class="sig-dot${done?' done':''}">${done?'✓':lbl}</div>`;
+    const ok = r.sigMin && r.sigTec && r.sigMan;
+    const sd = (done, lbl) => `<div style="width:22px;height:22px;border-radius:50%;border:1.5px solid ${done?'#c49a3c':'#ddd'};background:${done?'rgba(196,154,60,.12)':'transparent'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${done?'#c49a3c':'#bbb'};">${done?'✓':lbl}</div>`;
     return `
-      <div class="req-card${ok?' signed':''}">
-        <div class="rc-top">
-          <div><div class="rc-num">Nº ${fN(r.num)}</div><div class="rc-date">${fD(r.data)}</div></div>
-          <div class="rc-sigs">${sd(!!r.sigMin,'M')}${sd(!!r.sigTec,'T')}${sd(!!r.sigMan,'N')}</div>
+    <div style="border:1px solid #e0e4ef;border-radius:10px;padding:13px;margin-bottom:10px;position:relative;border-left:4px solid ${ok?'#c49a3c':'#dde2ef'};">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <span style="font-family:monospace;font-size:1rem;font-weight:800;color:#1a3a6b;">Nº ${fN(r.num)}</span>
+          <span style="font-size:.75rem;color:#888;margin-left:8px;">📅 ${fD(r.dataSolicitacao)}</span>
         </div>
-        <div class="rc-meta">⛪ ${r.igreja||'—'} · 📂 ${r.categoria||'—'}<br>👤 ${r.solicitante||'—'}</div>
-        <div class="rc-val">${fM(tot)}</div>
-        <div class="rc-actions">
-          <button class="btn btn-primary btn-sm" onclick="abrirNomes(${realIdx})">📝 Nomes · PDF</button>
-          <button class="btn btn-secondary btn-sm" onclick="assinarReq(${realIdx})">✍️ Assinar</button>
-          <button class="btn btn-secondary btn-sm" onclick="imprimirReq(${realIdx})">🖨️ Imprimir</button>
-          <button class="btn btn-secondary btn-sm" onclick="editarReq(${realIdx})">✏️ Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="excluirReq(${realIdx})">🗑</button>
-        </div>
-      </div>`;
+        <div style="display:flex;gap:4px;">${sd(!!r.sigMin,'M')}${sd(!!r.sigTec,'T')}${sd(!!r.sigMan,'N')}</div>
+      </div>
+      <div style="font-size:.82rem;color:#555;margin-bottom:4px;">👤 ${r.nomeSolicitante||'—'}</div>
+      <div style="font-size:.78rem;color:#888;margin-bottom:10px;">⛪ ${(r.ministerios||[]).join(', ')||'—'} · 📂 ${(r.categorias||[]).join(', ')||'—'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button onclick="assinarReq(${realIdx})" style="padding:6px 12px;border:1px solid #dde2ef;border-radius:6px;background:#f5f5f5;font-size:.78rem;font-weight:600;cursor:pointer;">✍️ Assinar</button>
+        <button onclick="enviarLinkAssinatura(${realIdx})" style="padding:6px 12px;border:1px solid #dde2ef;border-radius:6px;background:#f5f5f5;font-size:.78rem;font-weight:600;cursor:pointer;">📲 Enviar Link</button>
+        <button onclick="gerarPDFReq(${realIdx})" style="padding:6px 12px;border:1px solid #dde2ef;border-radius:6px;background:#f5f5f5;font-size:.78rem;font-weight:600;cursor:pointer;">📄 PDF</button>
+        <button onclick="carregarReqNoForm(${realIdx})" style="padding:6px 12px;border:1px solid #dde2ef;border-radius:6px;background:#f5f5f5;font-size:.78rem;font-weight:600;cursor:pointer;">✏️ Editar</button>
+        <button onclick="excluirReq(${realIdx})" style="padding:6px 12px;border:1px solid rgba(192,57,43,.3);border-radius:6px;background:transparent;color:#c0392b;font-size:.78rem;font-weight:600;cursor:pointer;">🗑</button>
+      </div>
+    </div>`;
   }).join('');
-
-  wrap.innerHTML = banner + cards;
 }
 
 function excluirReq(idx) {
   if (!confirm('Excluir Req. ' + fN(DB.requisicoes[idx].num) + '?')) return;
   DB.requisicoes.splice(idx, 1);
-  salvar();
-  renderLista();
-  atualizarBadge();
+  salvarFirebase();
+  renderListaReqs();
   showToast('🗑 Excluída.');
 }
 
-function compartilhar() {
-  const url = window.location.href.split('?')[0];
-  const txt = encodeURIComponent('*CCB Adm Vinhedo – Requisição de Compras*\n\nAcesse o app:\n' + url);
-  window.open('https://wa.me/?text=' + txt, '_blank');
+function carregarReqNoForm(idx) {
+  const r = DB.requisicoes[idx];
+  fecharModalLista();
+  // Ministérios
+  ['min0','min1','min2','min3','min4','min5','min6'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = (r.ministerios||[]).includes(['NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA','RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'][i]);
+  });
+  // Categorias
+  ['cat0','cat1','cat2','cat3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = (r.categorias||[]).includes(['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'][i]);
+  });
+  const ds = document.getElementById('dataSolicitacao');
+  if (ds) ds.value = r.dataSolicitacao || '';
+  const ns = document.getElementById('nomeSolicitante');
+  if (ns) ns.value = r.nomeSolicitante || '';
+  // Itens
+  for (let i = 1; i <= NUM_LINHAS; i++) {
+    const it = (r.itens||[])[i-1];
+    const d = document.querySelector(`.inp-desc-item[data-row="${i}"]`);
+    const u = document.getElementById(`und_${i}`);
+    const q = document.getElementById(`qntd_${i}`);
+    if (d) d.value = it?.desc || '';
+    if (u) u.value = it?.und || '';
+    if (q) q.value = it?.qtd || '';
+  }
+  const obs = document.getElementById('observacao');
+  if (obs) obs.value = r.obs || '';
+  showToast('✏️ Editando Req. ' + fN(r.num));
 }
 
+// ===== ENVIAR LINK ASSINATURA =====
 function enviarLinkAssinatura(idx) {
   const r = DB.requisicoes[idx];
-  // Lê o nome e campo já preenchidos no modal
-  const nomeAtual  = ($('assNome')?.value || '').trim();
-  const campoAtual = $('assField')?.value || 'min';
-
   const base = window.location.href.split('?')[0];
-  // Inclui nome e campo na URL para pré-preencher para o assinante
-  let url = base + '?assinar=' + r.id;
-  if (nomeAtual)  url += '&nome='  + encodeURIComponent(nomeAtual);
-  if (campoAtual) url += '&campo=' + encodeURIComponent(campoAtual);
-
   const campos = [
     !r.sigMin ? 'Ministério Local' : null,
     !r.sigTec ? 'Aprovação Técnica' : null,
-    !r.sigMan ? 'Manutenção' : null,
+    !r.sigMan ? 'Manutenção / Adm' : null,
   ].filter(Boolean).join(', ');
-  const pendentes = campos ? `\n_Pendente: ${campos}_` : '\n_Todas assinaturas concluídas_ ✅';
+  const pendentes = campos ? `Pendente: ${campos}` : 'Todas assinaturas concluídas ✅';
+  const url = `${base}?assinar=${r.id}`;
   const txt = encodeURIComponent(
-    `Toque no link para assinar:\n${url}\n\n` +
-    `_Ao assinar, você concorda com o armazenamento desta assinatura para fins de aprovação interna de compras da Congregação Cristã no Brasil — Adm Vinhedo. Lei LGPD nº 13.709/2018._`
+    `*CCB Adm Vinhedo – Requisição Nº ${fN(r.num)}*\n` +
+    `Solicitante: ${r.nomeSolicitante||'—'}\n` +
+    `${pendentes}\n\n` +
+    `Toque no link para visualizar e assinar:\n${url}`
   );
   window.open('https://wa.me/?text=' + txt, '_blank');
 }
 
-/* ══════════════════════════════════════
-   VISUALIZAR
-══════════════════════════════════════ */
-let previewReq = null;
-function verReq(idx) {
-  previewReq = DB.requisicoes[idx];
-  $('bodyPreview').innerHTML = docHTML(previewReq);
-  openOv('ovPreview');
-}
-function imprimirReq(idx) {
-  const d = DB.requisicoes[idx];
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8">
-<title>Req CCB ${fN(d.num)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  @page { size: A4 landscape; margin: 12mm; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Instrument Sans', Arial, sans-serif; font-size: 9pt; color: #0f1e33; background: #fff; }
-  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-</style>
-</head>
-<body>
-${docHTML(d)}
-<script>window.onload = () => { setTimeout(() => window.print(), 400); }<\/script>
-</body></html>`);
-  win.document.close();
-}
-
-function imprimirAtual() {
-  if (!previewReq) return;
-  imprimirReq(DB.requisicoes.indexOf(previewReq));
-}
-
-/* ══════════════════════════════════════
-   NOMES + PDF FÍSICO
-══════════════════════════════════════ */
-let nomesIdx = null;
-
-function abrirNomes(idx) {
-  nomesIdx = idx;
-  const r = DB.requisicoes[idx];
-  $('nomesInfo').innerHTML = `<strong>${fN(r.num)}</strong> · ${r.igreja||'—'} · <strong>${r.solicitante||'—'}</strong>`;
-  // Pré-preencher nomes já salvos
-  $('nomeMin').value = r.nomeMin || '';
-  $('nomeTec').value = r.nomeTec || '';
-  $('nomeMan').value = r.nomeMan || '';
-  openOv('ovNomes');
-  setTimeout(() => $('nomeMin').focus(), 200);
-}
-
-function salvarNomesEPDF() {
-  const r = DB.requisicoes[nomesIdx];
-  // Salva os nomes na requisição (mantém assinaturas digitais existentes)
-  r.nomeMin = $('nomeMin').value.trim() || r.nomeMin || '';
-  r.nomeTec = $('nomeTec').value.trim() || r.nomeTec || '';
-  r.nomeMan = $('nomeMan').value.trim() || r.nomeMan || '';
-  salvar();
-  closeOv('ovNomes');
-  // Gera PDF com os nomes impressos e linhas para assinar fisicamente
-  gerarPDF(r);
-  renderLista();
-}
-
-/* ══════════════════════════════════════
-   ASSINATURA DIGITAL
-══════════════════════════════════════ */
-let assIdx = null, assEmpty = true;
-
-/* Retorna true se o usuário atual pode editar/excluir o campo */
-function podeEditarAssinatura(campo) {
-  // Modo assinante (veio pelo link): só pode mexer no próprio campo
-  if (window._modoAssinante) {
-    return (window._campoUrl || '') === campo;
-  }
-  // Solicitante (acesso direto): pode editar tudo
-  return true;
-}
-
+// ===== ASSINATURA DIGITAL =====
 function assinarReq(idx) {
   assIdx = idx;
   const r = DB.requisicoes[idx];
-  const tot = (r.itens||[]).reduce((s,it)=>s+it.qtd*it.custo,0);
+  const assinaturas = [
+    {key:'min', label:'Ministério Local',   sig:r.sigMin, nome:r.nomeMin},
+    {key:'tec', label:'Aprovação Técnica',  sig:r.sigTec, nome:r.nomeTec},
+    {key:'man', label:'Manutenção / Adm',   sig:r.sigMan, nome:r.nomeMan},
+  ];
+  const podeEditar = campo => !window._modoAssinante || (window._campoUrl||'') === campo;
 
-  // Mini-resumo dos itens para visualização
-  const itensHTML = (r.itens||[]).map((it,i)=>`
-    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--cream2);font-size:12px;">
-      <span style="flex:1;color:var(--text);">${i+1}. ${it.desc||'—'} <span style="color:var(--text3)">${it.und||''}</span></span>
-      <span style="color:var(--text2);white-space:nowrap;margin-left:8px;">x${it.qtd} = ${fM(it.qtd*it.custo)}</span>
+  const assinadas = assinaturas.filter(a => a.sig).map(a => `
+    <div style="border:1px solid #e0e4ef;border-radius:8px;overflow:hidden;margin-bottom:8px;">
+      <div style="background:#1a3a6b;padding:7px 12px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:.72rem;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.5px;">${a.label} ✅</span>
+        ${podeEditar(a.key) ? `
+          <div style="display:flex;gap:5px;">
+            <button onclick="reeditarAssinatura('${a.key}',${idx})" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:5px;padding:3px 8px;font-size:.72rem;color:#fff;cursor:pointer;">✏️</button>
+            <button onclick="excluirAssinatura('${a.key}',${idx})" style="background:rgba(192,57,43,.35);border:1px solid rgba(255,80,80,.4);border-radius:5px;padding:3px 8px;font-size:.72rem;color:#fff;cursor:pointer;">🗑</button>
+          </div>` : `<span style="font-size:.7rem;color:rgba(255,255,255,.4);">✅</span>`}
+      </div>
+      <div style="padding:8px 12px;display:flex;align-items:center;gap:10px;background:#fafafa;">
+        <img src="${a.sig}" style="height:36px;object-fit:contain;">
+        <span style="font-size:.82rem;color:#1a3a6b;font-weight:600;">${a.nome||''}</span>
+      </div>
     </div>`).join('');
 
-  $('bodyAssinar').innerHTML = `
-    <!-- INFO DA REQ -->
-    <div style="background:var(--cream);border-radius:var(--r);padding:10px 12px;margin-bottom:10px;font-size:13px;color:var(--navy2);">
-      <strong>${fN(r.num)}</strong> · ${r.igreja||'—'} · ${r.solicitante||'—'}
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">📅 ${fD(r.data)} · 📂 ${r.categoria||'—'}</div>
-    </div>
+  const pendentes = assinaturas.filter(a => !a.sig);
+  const selectOpts = pendentes.length
+    ? pendentes.map(a => `<option value="${a.key}">${a.label}</option>`).join('')
+    : `<option value="" disabled>Todos assinados ✅</option>`;
 
-    <!-- BOTÕES: VER ITENS + ENVIAR LINK (só para o solicitante) -->
-    <div style="display:flex;gap:7px;margin-bottom:12px;">
-      <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="toggleItensReq()">👁 Ver Itens</button>
-      ${!window._modoAssinante ? `<button class="btn btn-secondary btn-sm" style="flex:1;" onclick="enviarLinkAssinatura(${idx})">📲 Enviar para Assinar</button>` : ''}
+  document.getElementById('bodyModalAssinar').innerHTML = `
+    <div style="background:#f0f2f7;border-radius:8px;padding:10px 13px;margin-bottom:12px;font-size:.85rem;color:#1a3a6b;">
+      <strong>Nº ${fN(r.num)}</strong> · ${(r.ministerios||[]).join(', ')||'—'}
+      <div style="font-size:.75rem;color:#666;margin-top:2px;">👤 ${r.nomeSolicitante||'—'} · 📅 ${fD(r.dataSolicitacao)}</div>
     </div>
-
-    <!-- ITENS COLAPSÁVEIS -->
-    <div id="itensReqWrap" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;margin-bottom:12px;">
-      ${itensHTML}
-      <div style="display:flex;justify-content:space-between;padding-top:7px;margin-top:4px;font-weight:700;font-size:13px;">
-        <span>Total</span><span>${fM(tot)}</span>
+    ${!window._modoAssinante ? `<button onclick="enviarLinkAssinatura(${idx})" style="width:100%;padding:9px;border:1px solid #dde2ef;border-radius:7px;background:#f5f5f5;font-size:.82rem;font-weight:600;cursor:pointer;margin-bottom:12px;">📲 Enviar link por WhatsApp</button>` : ''}
+    ${assinadas}
+    ${pendentes.length ? `
+    <div style="margin-top:4px;">
+      <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;letter-spacing:.4px;margin-bottom:4px;">Campo</label>
+      <select id="assField" style="width:100%;padding:9px 12px;border:1.5px solid #dde2ef;border-radius:7px;font-size:.88rem;outline:none;margin-bottom:10px;">${selectOpts}</select>
+      <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;letter-spacing:.4px;margin-bottom:4px;">Nome</label>
+      <input type="text" id="assNome" placeholder="Nome completo" style="width:100%;padding:9px 12px;border:1.5px solid #dde2ef;border-radius:7px;font-size:.88rem;outline:none;margin-bottom:10px;">
+      <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;color:#666;letter-spacing:.4px;margin-bottom:4px;">Assinatura</label>
+      <div style="border:1.5px solid #dde2ef;border-radius:8px;overflow:hidden;margin-bottom:8px;">
+        <div style="background:#1a3050;padding:7px 12px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:.7rem;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;">Assinatura</span>
+          <span id="assSt" style="font-size:.7rem;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.5);">Pendente</span>
+        </div>
+        <div style="background:#fafafa;position:relative;">
+          <canvas id="assCanvas" style="display:block;width:100%;height:110px;cursor:crosshair;touch-action:none;"></canvas>
+          <div id="assHint" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.82rem;color:#bbb;pointer-events:none;transition:opacity .3s;">✍️ Assine aqui com o dedo ou mouse</div>
+        </div>
+        <div style="background:#f5f5f5;padding:7px 10px;">
+          <button onclick="limparCanvas()" style="background:#fff;border:1px solid #dde2ef;border-radius:5px;padding:5px 12px;font-size:.75rem;color:#666;cursor:pointer;">Limpar</button>
+        </div>
       </div>
-    </div>
+      <div style="background:#f0f2f7;border-radius:7px;padding:9px 12px;font-size:.72rem;color:#666;line-height:1.6;">
+        🔒 Ao assinar, você concorda com o armazenamento desta assinatura para fins de aprovação interna — Lei LGPD nº 13.709/2018.
+      </div>
+    </div>` : ''}
+  `;
 
-    ${[
-      {key:'min', label:'Ministério Local',  sig:r.sigMin, nome:r.nomeMin},
-      {key:'tec', label:'Aprovação Técnica', sig:r.sigTec, nome:r.nomeTec},
-      {key:'man', label:'Manutenção / Adm',  sig:r.sigMan, nome:r.nomeMan},
-    ].filter(a=>a.sig).map(a=>{
-      const podEditar = podeEditarAssinatura(a.key);
-      return `
-      <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px;">
-        <div style="background:var(--navy2);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;">${a.label} ✅</span>
-          ${podEditar ? `
-            <div style="display:flex;gap:5px;">
-              <button onclick="reeditarAssinatura('${a.key}',${idx})" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">✏️ Reeditar</button>
-              <button onclick="excluirAssinatura('${a.key}',${idx})" style="background:rgba(192,57,43,.35);border:1px solid rgba(255,100,80,.4);border-radius:6px;padding:3px 9px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">🗑</button>
-            </div>` : `<span style="font-size:10px;color:rgba(255,255,255,.4);">✅ Assinado</span>`}
-        </div>
-        <div style="padding:8px 12px;display:flex;align-items:center;gap:10px;background:#fafaf8;">
-          <img src="${a.sig}" style="height:36px;object-fit:contain;">
-          <span style="font-size:12px;color:var(--navy2);font-weight:600;">${a.nome||''}</span>
-        </div>
-      </div>`;
-    }).join('')}
-
-    <!-- NOVO CAMPO PARA ASSINAR -->
-    <div class="field" style="margin-top:4px;"><label>Novo Campo</label>
-      <select id="assField" class="finput">
-        ${!r.sigMin ? `<option value="min">Ministério Local</option>` : ''}
-        ${!r.sigTec ? `<option value="tec">Aprovação Técnica</option>` : ''}
-        ${!r.sigMan ? `<option value="man">Manutenção</option>` : ''}
-        ${r.sigMin&&r.sigTec&&r.sigMan ? `<option value="" disabled>Todos assinados ✅</option>` : ''}
-      </select>
-    </div>
-    <div class="field"><label>Nome</label><input type="text" class="finput" id="assNome" placeholder="Nome completo"></div>
-    <div class="sig-wrap">
-      <div class="sig-hdr"><span class="sig-hdr-t">Assinatura</span><span class="sig-st" id="assSt">Pendente</span></div>
-      <div class="sig-area"><canvas id="assCanvas" style="width:100%;height:110px;display:block;cursor:crosshair;touch-action:none;"></canvas>
-        <div class="sig-hint" id="assHint">✍️ Assine aqui com o dedo</div></div>
-      <div class="sig-acts"><button class="sig-clr" onclick="limparCanvas()">Limpar</button></div>
-    </div>
-    <div style="background:#f0ede6;border-radius:var(--r);padding:10px 12px;font-size:11px;color:var(--text3);line-height:1.6;margin-top:4px;">
-      🔒 Ao assinar, você concorda com o armazenamento desta assinatura para fins de aprovação interna de compras da Congregação Cristã no Brasil — Adm Vinhedo.<br>
-      <a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm" target="_blank" style="color:var(--navy2);font-weight:600;">Lei LGPD nº 13.709/2018</a>
-    </div>`;
-  openOv('ovAssinar');
+  document.getElementById('modalAssinar').style.display = 'flex';
   setTimeout(() => {
     initCanvas();
-    // Pré-preencher nome e campo vindos da URL (modo assinante)
-    if (window._nomeUrl)  { const el=$('assNome');  if(el) el.value=window._nomeUrl; }
-    if (window._campoUrl) { const el=$('assField'); if(el) el.value=window._campoUrl; }
+    if (window._nomeUrl) { const el=document.getElementById('assNome'); if(el) el.value=window._nomeUrl; }
+    if (window._campoUrl) { const el=document.getElementById('assField'); if(el) el.value=window._campoUrl; }
   }, 100);
 }
 
+function fecharModalAssinar() {
+  document.getElementById('modalAssinar').style.display = 'none';
+}
+document.getElementById('modalAssinar').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalAssinar();
+});
+
 function reeditarAssinatura(campo, idx) {
+  const labels = {min:'Ministério Local', tec:'Aprovação Técnica', man:'Manutenção / Adm'};
   const r = DB.requisicoes[idx];
-  const nomes = {min: r.nomeMin, tec: r.nomeTec, man: r.nomeMan};
-  const labels = {min:'Ministério Local', tec:'Aprovação Técnica', man:'Manutenção'};
-  const sel = $('assField');
+  const nomes = {min:r.nomeMin, tec:r.nomeTec, man:r.nomeMan};
+  const sel = document.getElementById('assField');
   if (sel) {
-    // Remove option existente do campo se houver
-    for (let i=sel.options.length-1; i>=0; i--) {
-      if (sel.options[i].value===campo) sel.remove(i);
+    let found = false;
+    for (let o of sel.options) { if(o.value===campo){found=true;break;} }
+    if (!found) {
+      const opt = document.createElement('option');
+      opt.value = campo; opt.textContent = labels[campo] + ' (reeditar)';
+      sel.insertBefore(opt, sel.firstChild);
     }
-    // Adiciona option habilitada no topo e seleciona
-    const opt = document.createElement('option');
-    opt.value = campo;
-    opt.textContent = labels[campo] + ' (reeditar)';
-    sel.insertBefore(opt, sel.firstChild);
     sel.value = campo;
   }
-  const inp = $('assNome');
-  if (inp) { inp.value = nomes[campo] || ''; inp.focus(); }
+  const inp = document.getElementById('assNome');
+  if (inp) { inp.value = nomes[campo]||''; inp.focus(); }
   limparCanvas();
-  const sw = document.querySelector('.sig-wrap');
-  if (sw) setTimeout(() => sw.scrollIntoView({behavior:'smooth', block:'center'}), 100);
 }
 
 function excluirAssinatura(campo, idx) {
   if (!confirm('Excluir esta assinatura?')) return;
   const r = DB.requisicoes[idx];
-  if (campo==='min') { r.sigMin=null; r.nomeMin=''; }
-  else if (campo==='tec') { r.sigTec=null; r.nomeTec=''; }
-  else if (campo==='man') { r.sigMan=null; r.nomeMan=''; }
-  salvarLocal();
-  showToast('⏳ Removendo assinatura...');
-  clearTimeout(_debTimer);
-  const payload = { requisicoes: DB.requisicoes, solicitantes: DB.solicitantes, itens: DB.itens, reqCounter: DB.counter, counter: DB.counter };
-  fetch(FS_DOC, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({fields:{dados:{stringValue:JSON.stringify(payload)}}}) })
-    .then(r => { if(!r.ok) throw new Error(); setDot('ok'); showToast('✅ Assinatura removida!'); })
-    .catch(() => { setDot('off'); showToast('⚠️ Removido localmente.'); });
-  // Reabrir o modal atualizado
+  if (campo==='min'){r.sigMin=null;r.nomeMin='';}
+  else if(campo==='tec'){r.sigTec=null;r.nomeTec='';}
+  else if(campo==='man'){r.sigMan=null;r.nomeMan='';}
+  salvarFirebase();
   assinarReq(idx);
-}
-
-function toggleItensReq() {
-  const w = $('itensReqWrap');
-  if (!w) return;
-  const aberto = w.style.display !== 'none';
-  w.style.display = aberto ? 'none' : 'block';
-  // Atualiza texto do botão
-  const btn = w.previousElementSibling?.querySelector('button:first-child');
-  if (btn) btn.textContent = aberto ? '👁 Ver Itens' : '🙈 Ocultar Itens';
+  renderListaReqs();
 }
 
 function initCanvas() {
-  const c = $('assCanvas'); if (!c) return;
+  const c = document.getElementById('assCanvas'); if (!c) return;
   const ctx = c.getContext('2d'), dpr = window.devicePixelRatio||1;
   c.width = c.offsetWidth*dpr; c.height = c.offsetHeight*dpr;
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.strokeStyle='#0f1e33'; ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round';
-  assEmpty = true; c._d = false;
-  const pt = e => { const r=c.getBoundingClientRect(), s=e.touches?e.touches[0]:e; return {x:s.clientX-r.left, y:s.clientY-r.top}; };
+  assEmpty=true; c._d=false;
+  const pt = e => { const r=c.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return{x:s.clientX-r.left,y:s.clientY-r.top}; };
   const start = e => { e.preventDefault(); c._d=true; const p=pt(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); };
-  const draw  = e => { e.preventDefault(); if(!c._d) return; const p=pt(e); ctx.lineTo(p.x,p.y); ctx.stroke();
-    if(assEmpty){ assEmpty=false; const h=$('assHint'); if(h)h.style.opacity='0'; const s=$('assSt'); if(s){s.textContent='Assinado ✓';s.className='sig-st ok';} } };
-  const stop  = () => c._d=false;
+  const draw  = e => { e.preventDefault(); if(!c._d)return; const p=pt(e); ctx.lineTo(p.x,p.y); ctx.stroke();
+    if(assEmpty){assEmpty=false;const h=document.getElementById('assHint');if(h)h.style.opacity='0';const s=document.getElementById('assSt');if(s){s.textContent='Assinado ✓';s.style.background='rgba(110,231,183,.25)';s.style.color='#6ee7b7';}} };
+  const stop = () => c._d=false;
   c.addEventListener('mousedown',start,{passive:false}); c.addEventListener('mousemove',draw,{passive:false});
   c.addEventListener('mouseup',stop); c.addEventListener('mouseleave',stop);
   c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',draw,{passive:false}); c.addEventListener('touchend',stop);
 }
 
 function limparCanvas() {
-  const c = $('assCanvas'); if(!c) return;
+  const c = document.getElementById('assCanvas'); if(!c)return;
   c.getContext('2d').clearRect(0,0,c.width,c.height);
-  assEmpty=true; const h=$('assHint'); if(h)h.style.opacity='1';
-  const s=$('assSt'); if(s){s.textContent='Pendente';s.className='sig-st';}
+  assEmpty=true;
+  const h=document.getElementById('assHint'); if(h)h.style.opacity='1';
+  const s=document.getElementById('assSt'); if(s){s.textContent='Pendente';s.style.background='rgba(255,255,255,.15)';s.style.color='rgba(255,255,255,.5)';}
 }
 
 function confirmarAssinatura() {
   if (assEmpty) { showToast('✍️ Desenhe a assinatura!'); return; }
-  const field = $('assField').value;
-  const nome  = ($('assNome').value||'').trim();
-  if (!nome) { showToast('⚠️ Informe o nome!'); return; }
+  const field = document.getElementById('assField')?.value;
+  const nome  = (document.getElementById('assNome')?.value||'').trim();
+  if (!field) { showToast('⚠️ Nenhum campo pendente!'); return; }
+  if (!nome)  { showToast('⚠️ Informe o nome!'); return; }
 
-  // Gerar imagem com FUNDO BRANCO (evita tarja preta do JPEG com transparência)
-  const canvas = $('assCanvas');
+  const canvas = document.getElementById('assCanvas');
   const mini = document.createElement('canvas');
   mini.width  = Math.round(canvas.width  * 0.5);
   mini.height = Math.round(canvas.height * 0.5);
   const ctx2 = mini.getContext('2d');
-  ctx2.fillStyle = '#ffffff';          // fundo branco antes de desenhar
-  ctx2.fillRect(0, 0, mini.width, mini.height);
-  ctx2.drawImage(canvas, 0, 0, mini.width, mini.height);
-  const img = mini.toDataURL('image/jpeg', 0.6); // JPEG com fundo branco = sem tarja
-
-  // Data atual formatada para registrar quando foi assinado
-  const hoje = new Date().toISOString().split('T')[0];
+  ctx2.fillStyle = '#ffffff';
+  ctx2.fillRect(0,0,mini.width,mini.height);
+  ctx2.drawImage(canvas,0,0,mini.width,mini.height);
+  const img = mini.toDataURL('image/jpeg',0.6);
 
   const r = DB.requisicoes[assIdx];
-  if (field==='min') { r.sigMin=img; r.nomeMin=nome; r.dataUltAssinatura=hoje; }
-  else if (field==='tec') { r.sigTec=img; r.nomeTec=nome; r.dataUltAssinatura=hoje; }
-  else if (field==='man') { r.sigMan=img; r.nomeMan=nome; r.dataUltAssinatura=hoje; }
+  if (field==='min'){r.sigMin=img;r.nomeMin=nome;}
+  else if(field==='tec'){r.sigTec=img;r.nomeTec=nome;}
+  else if(field==='man'){r.sigMan=img;r.nomeMan=nome;}
+  r.dataUltAssinatura = new Date().toISOString().split('T')[0];
 
   salvarLocal();
-  closeOv('ovAssinar');
-  renderLista();
-  atualizarBadge();
+  fecharModalAssinar();
+  renderListaReqs();
   showToast('⏳ Salvando assinatura...');
 
   clearTimeout(_debTimer);
-  const payload = {
-    requisicoes:  DB.requisicoes,
-    solicitantes: DB.solicitantes,
-    itens:        DB.itens,
-    reqCounter:   DB.counter,
-    counter:      DB.counter,
-  };
-  fetch(FS_DOC, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fields: { dados: { stringValue: JSON.stringify(payload) } } })
-  })
-  .then(r => {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    setDot('ok');
-    showToast('✅ Assinatura salva e sincronizada!');
-  })
-  .catch(() => {
-    setDot('off');
-    showToast('⚠️ Salvo localmente. Sem conexão.');
-  });
+  const payload = { requisicoes:DB.requisicoes, solicitantes:DB.solicitantes, reqCounter:DB.counter, counter:DB.counter };
+  fetch(FS_DOC, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fields:{dados:{stringValue:JSON.stringify(payload)}}}) })
+    .then(res => { if(!res.ok) throw new Error(); setDot('ok'); showToast('✅ Assinatura salva e sincronizada!'); })
+    .catch(() => { setDot('off'); showToast('⚠️ Salvo localmente. Sem conexão.'); });
 }
 
-/* ══════════════════════════════════════
-   PDF
-══════════════════════════════════════ */
-function gerarPDF(d) {
+// ===== GERAR PDF COM ASSINATURAS =====
+function gerarPDFReq(idx) {
+  const d = DB.requisicoes[idx];
   const {jsPDF} = window.jspdf;
   const doc = new jsPDF('p','mm','a4');
-  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(15,30,51);
-  doc.text('Congregação Cristã no Brasil',105,18,{align:'center'});
+
+  // Cabeçalho
+  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(26,58,107);
+  doc.text('Congregação Cristã no Brasil',105,16,{align:'center'});
   doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(74,90,106);
-  doc.text('Requisição de Compras – Administração Vinhedo',105,24,{align:'center'});
-  doc.setDrawColor(15,30,51); doc.setLineWidth(.5); doc.line(14,27,196,27);
-  const metas=[['Nº',fN(d.num)],['Data',fD(d.data)],['Igreja',d.igreja||'—'],['Categoria',d.categoria||'—'],['Solicitante',d.solicitante||'—']];
-  let mx=14;
-  metas.forEach(([l,v])=>{doc.setFontSize(7);doc.setTextColor(122,138,154);doc.text(l,mx,32);doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(28,40,55);doc.text(String(v),mx,37);mx+=37;});
-  const rows=(d.itens||[]).map((it,i)=>[i+1,it.desc||'—',it.und||'—',it.qtd,fM(it.custo),fM(it.qtd*it.custo)]);
-  const tot=(d.itens||[]).reduce((s,it)=>s+it.qtd*it.custo,0);
-  doc.autoTable({startY:43,head:[['Nº','Descrição','Unid.','Qtd','Custo Unit.','Total']],body:rows,
-    foot:[['','','','','Total Geral',fM(tot)]],
-    headStyles:{fillColor:[15,30,51],fontSize:8,textColor:255},
-    footStyles:{fillColor:[248,246,240],textColor:[15,30,51],fontStyle:'bold',fontSize:8},
-    bodyStyles:{fontSize:8},theme:'striped',alternateRowStyles:{fillColor:[248,246,240]}});
-  let sy=doc.lastAutoTable.finalY+12;
-  doc.setDrawColor(15,30,51); doc.setLineWidth(.4); doc.line(14,sy,196,sy);
-  [{l:'Ministério Local',img:d.sigMin,n:d.nomeMin},{l:'Área Técnica',img:d.sigTec,n:d.nomeTec},{l:'Manutenção',img:d.sigMan,n:d.nomeMan}].forEach((sg,i)=>{
-    const sx=14+i*61;
-    doc.setFontSize(7); doc.setTextColor(122,138,154); doc.setFont('helvetica','bold');
-    doc.text(sg.l.toUpperCase(),sx,sy+5);
-    if(sg.img){
-      try{doc.addImage(sg.img,'PNG',sx,sy+7,57,15);}catch(e){}
-    } else {
-      // Linha sólida para assinar fisicamente
-      doc.setDrawColor(80); doc.setLineWidth(0.5); doc.line(sx,sy+22,sx+57,sy+22); doc.setDrawColor(15,30,51);
-    }
-    doc.setFont('helvetica', sg.n ? 'bold' : 'normal');
-    doc.setTextColor(sg.n ? 26 : 150, sg.n ? 48 : 150, sg.n ? 80 : 150);
-    doc.setFontSize(8);
-    doc.text(sg.n || '', sx, sy+28);
+  doc.text('REQUISIÇÃO DE COMPRAS – ADMINISTRAÇÃO VINHEDO',105,22,{align:'center'});
+  doc.setDrawColor(26,58,107); doc.setLineWidth(.6); doc.line(14,25,196,25);
+
+  // Metadados
+  const metas = [
+    ['Nº', fN(d.num)],
+    ['Data', fD(d.dataSolicitacao)],
+    ['Ministério', (d.ministerios||[]).join(', ')||'—'],
+    ['Categoria', (d.categorias||[]).join(', ')||'—'],
+    ['Solicitante', d.nomeSolicitante||'—'],
+  ];
+  let mx = 14;
+  metas.forEach(([l,v]) => {
+    doc.setFontSize(7); doc.setTextColor(140,150,164); doc.text(l,mx,30);
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(26,40,55); doc.text(String(v),mx,35);
+    mx += 37; doc.setFont('helvetica','normal');
   });
-  doc.save(`Req_CCB_${fN(d.num)}.pdf`);
+
+  // Tabela de itens
+  const rows = (d.itens||[]).map((it,i) => [i+1, it.desc||'—', it.und||'—', it.qtd||'—']);
+  doc.autoTable({
+    startY: 40,
+    head: [['Nº','Descrição','Unid.','Qtd']],
+    body: rows,
+    headStyles: {fillColor:[26,58,107], fontSize:8, textColor:255},
+    bodyStyles: {fontSize:8},
+    theme: 'striped',
+    alternateRowStyles: {fillColor:[240,242,247]},
+  });
+
+  // Observação
+  let sy = doc.lastAutoTable.finalY + 6;
+  if (d.obs) {
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(140,150,164);
+    doc.text('OBSERVAÇÃO:', 14, sy);
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+    const lines = doc.splitTextToSize(d.obs, 180);
+    doc.text(lines, 14, sy+5);
+    sy += lines.length*4 + 10;
+  } else {
+    sy += 6;
+  }
+
+  // Linha separadora
+  doc.setDrawColor(26,58,107); doc.setLineWidth(.4); doc.line(14,sy,196,sy); sy += 8;
+
+  // Assinaturas
+  const sigs = [
+    {l:'Ministério Local', img:d.sigMin, n:d.nomeMin},
+    {l:'Aprovação Técnica', img:d.sigTec, n:d.nomeTec},
+    {l:'Manutenção / Adm', img:d.sigMan, n:d.nomeMan},
+  ];
+  sigs.forEach((sg,i) => {
+    const sx = 14 + i*61;
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(140,150,164);
+    doc.text(sg.l.toUpperCase(),sx,sy);
+    if (sg.img) {
+      try { doc.addImage(sg.img,'JPEG',sx,sy+3,57,14); } catch(e){}
+    } else {
+      doc.setDrawColor(120); doc.setLineWidth(.4); doc.line(sx,sy+17,sx+57,sy+17);
+    }
+    doc.setFont('helvetica', sg.n?'bold':'normal');
+    doc.setFontSize(8); doc.setTextColor(sg.n?26:160, sg.n?58:160, sg.n?107:160);
+    doc.text(sg.n||'', sx, sy+23);
+  });
+
+  doc.save('Req_CCB_' + fN(d.num) + '.pdf');
   showToast('📄 PDF gerado!');
 }
 
-/* ══════════════════════════════════════
-   HTML DOC (preview + imprimir paisagem)
-══════════════════════════════════════ */
-function docHTML(d) {
-  const thS = 'background:#0f1e33;color:#fff;padding:7px 10px;text-align:left;font-size:9.5pt;font-family:inherit;';
-  let rows='', tot=0;
-  (d.itens||[]).forEach((it,i)=>{ const sub=it.qtd*it.custo; tot+=sub;
-    rows+=`<tr style="background:${i%2===0?'#fff':'#f8f6f0'}">
-      <td style="padding:5px 10px;border-bottom:1px solid #ede9e0;text-align:center;">${i+1}</td>
-      <td style="padding:5px 10px;border-bottom:1px solid #ede9e0;">${it.desc||'—'}</td>
-      <td style="padding:5px 10px;border-bottom:1px solid #ede9e0;text-align:center;">${it.und||'—'}</td>
-      <td style="padding:5px 10px;border-bottom:1px solid #ede9e0;text-align:right;">${it.qtd}</td>
-      <td style="padding:5px 10px;border-bottom:1px solid #ede9e0;text-align:right;">${fM(it.custo)}</td>
-      <td style="padding:5px 10px;border-bottom:1px solid #ede9e0;text-align:right;font-weight:600;">${fM(sub)}</td>
-    </tr>`;
-  });
+// ===== INIT FIREBASE =====
+window.addEventListener('DOMContentLoaded', async () => {
+  carregarLocal();
+  atualizarNumReq();
+  setDot('busy');
+  await carregarFirebase();
+  atualizarNumReq();
 
-  const sig=(img,nome,lbl)=>`
-    <div style="flex:1;padding:0 12px;border-right:1px solid #e0dbd4;">
-      <div style="font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8a96a4;margin-bottom:8px;">${lbl}</div>
-      ${img
-        ? `<img src="${img}" style="height:44px;max-width:100%;display:block;object-fit:contain;margin-bottom:4px;">`
-        : `<div style="height:44px;border-bottom:1.5px solid #333;margin-bottom:4px;"></div>`}
-      <div style="font-size:9pt;color:#1a3050;padding-top:4px;border-top:1px solid #e0dbd4;font-weight:${nome?'600':'400'};">
-        ${nome||'________________________________'}
-      </div>
-    </div>`;
-
-  return `
-  <div style="font-family:'Instrument Sans',Arial,sans-serif;color:#0f1e33;font-size:9.5pt;">
-
-    <!-- CABEÇALHO -->
-    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2.5px solid #0f1e33;padding-bottom:10px;margin-bottom:10px;">
-      <div>
-        <div style="font-family:'Syne',Georgia,serif;font-size:15pt;font-weight:800;">Congregação Cristã no Brasil</div>
-        <div style="font-size:9pt;color:#4a5568;margin-top:2px;">Requisição de Compras – Administração Vinhedo</div>
-      </div>
-      <div style="font-family:'Syne',Georgia,serif;font-size:22pt;font-weight:800;color:#1a3050;letter-spacing:1px;">Nº ${fN(d.num)}</div>
-    </div>
-
-    <!-- METADADOS -->
-    <div style="display:flex;gap:0;background:#f0ede6;border-radius:6px;padding:8px 0;margin-bottom:10px;">
-      ${[['Data Assinatura',fD(d.dataUltAssinatura||d.data)],['Igreja',d.igreja||'—'],['Categoria',d.categoria||'—'],['Solicitante',d.solicitante||'—']].map(([l,v])=>`
-        <div style="flex:1;padding:0 14px;border-right:1px solid #d4cfc6;">
-          <div style="font-size:7pt;font-weight:700;text-transform:uppercase;color:#8a96a4;margin-bottom:2px;">${l}</div>
-          <div style="font-size:10pt;font-weight:600;color:#0f1e33;">${v}</div>
-        </div>`).join('')}
-    </div>
-
-    <!-- TABELA ITENS -->
-    <table style="width:100%;border-collapse:collapse;font-size:9pt;margin-bottom:14px;">
-      <thead>
-        <tr>
-          <th style="${thS}width:32px;text-align:center;">Nº</th>
-          <th style="${thS}">Descrição</th>
-          <th style="${thS}width:60px;text-align:center;">Unid.</th>
-          <th style="${thS}width:50px;text-align:right;">Qtd</th>
-          <th style="${thS}width:90px;text-align:right;">Custo Unit.</th>
-          <th style="${thS}width:90px;text-align:right;">Total</th>
-        </tr>
-      </thead>
-      <tbody>${rows||`<tr><td colspan="6" style="padding:12px;text-align:center;color:#999;">Nenhum item.</td></tr>`}</tbody>
-      <tfoot>
-        <tr>
-          <td colspan="5" style="padding:7px 10px;text-align:right;font-weight:700;font-size:10pt;background:#e8e4db;border-top:2px solid #0f1e33;">Total Geral</td>
-          <td style="padding:7px 10px;text-align:right;font-weight:700;font-size:11pt;background:#e8e4db;border-top:2px solid #0f1e33;">${fM(tot)}</td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <!-- ASSINATURAS -->
-    <div style="border-top:2px solid #0f1e33;padding-top:12px;">
-      <div style="font-size:7.5pt;font-weight:700;text-transform:uppercase;color:#8a96a4;letter-spacing:.5px;margin-bottom:10px;">Aprovações</div>
-      <div style="display:flex;gap:0;">
-        ${sig(d.sigMin,d.nomeMin,'Ministério Local')}
-        ${sig(d.sigTec,d.nomeTec,'Aprovação Técnica')}
-        <div style="flex:1;padding:0 12px;">
-          <div style="font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8a96a4;margin-bottom:8px;">Manutenção / Adm</div>
-          ${d.sigMan
-            ? `<img src="${d.sigMan}" style="height:44px;max-width:100%;display:block;object-fit:contain;margin-bottom:4px;">`
-            : `<div style="height:44px;border-bottom:1.5px solid #333;margin-bottom:4px;"></div>`}
-          <div style="font-size:9pt;color:#1a3050;padding-top:4px;border-top:1px solid #e0dbd4;font-weight:${d.nomeMan?'600':'400'};">
-            ${d.nomeMan||'________________________________'}
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>`;
-}
-
-/* ══════════════════════════════════════
-   INICIALIZAÇÃO
-══════════════════════════════════════ */
-window.addEventListener('load', () => {
-  $('fData').value = d3();
-  syncEmpty();
-  carregar().then(() => {
-    // Verifica se há parâmetro ?assinar=ID na URL
-    const params = new URLSearchParams(window.location.search);
-    const reqId  = params.get('assinar');
-    if (reqId) {
-      window._modoAssinante = true;
-      window._nomeUrl  = params.get('nome')  || '';
-      window._campoUrl = params.get('campo') || '';
-      // Recarrega do Firebase para garantir dados mais recentes
-      carregarFirebase().then(() => {
-        const idx = DB.requisicoes.findIndex(r => String(r.id) === String(reqId));
-        if (idx !== -1) {
-          goTo('lista', $('bn-lista'));
-          setTimeout(() => assinarReq(idx), 300);
-        } else {
-          showToast('⚠️ Requisição não encontrada.', 4000);
-        }
-      });
+  // Modo assinante via URL
+  const params = new URLSearchParams(window.location.search);
+  const reqId = params.get('assinar');
+  if (reqId) {
+    window._modoAssinante = true;
+    window._nomeUrl  = params.get('nome')  || '';
+    window._campoUrl = params.get('campo') || '';
+    await carregarFirebase();
+    const idx = DB.requisicoes.findIndex(r => String(r.id) === String(reqId));
+    if (idx !== -1) {
+      setTimeout(() => assinarReq(idx), 400);
+    } else {
+      showToast('⚠️ Requisição não encontrada.', 4000);
     }
-  });
-  setInterval(() => carregar(), 60000);
+  }
+
+  // Sincroniza a cada 60s
+  setInterval(() => carregarFirebase(), 60000);
 });
+
+// ===== INIT =====
+criarLinhas();
 </script>
+
+<!-- ===== MODAL LISTA DE REQUISIÇÕES ===== -->
+<div id="modalLista" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:8000;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto;">
+  <div style="background:#fff;border-radius:14px;width:96%;max-width:820px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;">
+    <div style="background:#1a3a6b;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <h2 style="color:#fff;font-size:.95rem;font-weight:700;">📋 Requisições Salvas</h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="carregarFirebase(true)" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer;">🔄 Sincronizar</button>
+        <button onclick="fecharModalLista()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;line-height:1;">×</button>
+      </div>
+    </div>
+    <div style="padding:16px;overflow-y:auto;flex:1;" id="listaReqsBody">
+      <p style="color:#888;text-align:center;padding:20px;">Carregando...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ASSINATURA ===== -->
+<div id="modalAssinar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:flex-end;justify-content:center;">
+  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:540px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,.25);overflow:hidden;">
+    <div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:10px auto 0;flex-shrink:0;"></div>
+    <div style="padding:12px 18px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <span style="font-size:1rem;font-weight:700;color:#1a3a6b;">✍️ Assinar Digitalmente</span>
+      <button onclick="fecharModalAssinar()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1;">×</button>
+    </div>
+    <div style="padding:14px;overflow-y:auto;flex:1;" id="bodyModalAssinar"></div>
+    <div style="padding:12px 14px;border-top:1px solid #eee;display:flex;gap:8px;flex-shrink:0;">
+      <button onclick="fecharModalAssinar()" style="flex:1;padding:10px;border:1.5px solid #dde2ef;border-radius:8px;background:#f5f5f5;font-weight:600;cursor:pointer;">Cancelar</button>
+      <button onclick="confirmarAssinatura()" style="flex:1;padding:10px;border:none;border-radius:8px;background:#1a3a6b;color:#fff;font-weight:700;cursor:pointer;">💾 Salvar Assinatura</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toastMsg" style="position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a3a6b;color:#fff;padding:10px 22px;border-radius:24px;font-size:.85rem;font-weight:600;z-index:99999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;"></div>
+
 </body>
 </html>
