@@ -2220,177 +2220,227 @@ function gerarPDFReq(idx) {
   const d = DB.requisicoes[idx];
   const {jsPDF} = window.jspdf;
   const doc = new jsPDF('p','mm','a4');
-  const L = 14, R = 196, W = R - L; // margens
 
-  // ── BORDA EXTERNA ──
-  doc.setDrawColor(0); doc.setLineWidth(0.6);
-  doc.rect(L, 10, W, 277);
+  // A4: 210 x 297mm — margens
+  const ML = 12, MR = 12, MT = 10;
+  const PW = 210 - ML - MR; // 186mm largura útil
+  const PH = 297 - MT - 10; // altura útil
 
-  // ── CABEÇALHO com borda interna ──
-  doc.setLineWidth(0.4);
-  doc.rect(L+2, 12, W-4, 14);
-  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(0);
-  doc.text('CONGREGAÇÃO CRISTÃ NO BRASIL', 105, 18, {align:'center'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
-  doc.text('REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO', 105, 23, {align:'center'});
+  // ══════════════════════════════════════
+  // BORDA EXTERNA
+  // ══════════════════════════════════════
+  doc.setDrawColor(0); doc.setLineWidth(0.7);
+  doc.rect(ML, MT, PW, PH);
 
-  // ── SEÇÃO MINISTÉRIOS / CATEGORIAS / SOLICITANTE ──
-  const secY = 26; const secH = 32;
-  doc.setLineWidth(0.3);
-  doc.line(L, secY+secH, R, secY+secH); // linha inferior da seção
+  // ══════════════════════════════════════
+  // CABEÇALHO — borda interna
+  // ══════════════════════════════════════
+  const hdrInnerX = ML+3, hdrInnerY = MT+3, hdrInnerW = PW-6, hdrInnerH = 16;
+  doc.setLineWidth(0.5);
+  doc.rect(hdrInnerX, hdrInnerY, hdrInnerW, hdrInnerH);
 
-  // Ministérios (coluna 1)
-  const ministeriosAll = ['NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA','RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'];
-  doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(0);
+  doc.text('CONGREGAÇÃO CRISTÃ NO BRASIL', ML+PW/2, MT+9, {align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text('REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO', ML+PW/2, MT+15, {align:'center'});
+
+  // ══════════════════════════════════════
+  // SEÇÃO MINISTÉRIOS / CATEGORIAS / SOLICITANTE
+  // começa após o cabeçalho com espaço
+  // ══════════════════════════════════════
+  const secY = MT + 22;   // topo da seção
+  const secH = 34;        // altura da seção
+  const secBot = secY + secH;
+
+  // Linha inferior da seção (separa da tabela)
+  doc.setDrawColor(0); doc.setLineWidth(0.4);
+  doc.line(ML, secBot, ML+PW, secBot);
+
+  // ── COL 1: Ministérios (largura ~72mm) ──
+  const col1W = 72;
+  const ministeriosAll = [
+    'NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA',
+    'RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'
+  ];
+  const minSpacing = secH / ministeriosAll.length;
   ministeriosAll.forEach((m, i) => {
-    const my = secY + 5 + i * 4.2;
+    const my = secY + minSpacing * i + minSpacing * 0.65;
     const checked = (d.ministerios||[]).includes(m);
-    doc.setLineWidth(0.3); doc.rect(L+2, my-2.5, 3.5, 3.5);
-    if (checked) { doc.setFont('helvetica','bold'); doc.text('✓', L+2.4, my+0.5); doc.setFont('helvetica','normal'); }
-    doc.setFontSize(6); doc.text(m, L+7, my+0.5);
+    // Checkbox 3.5x3.5mm
+    doc.setLineWidth(0.35); doc.rect(ML+2, my-2.8, 3.5, 3.5);
+    if (checked) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
+      doc.text('X', ML+3.2, my+0.2);
+    }
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(0);
+    doc.text(m, ML+7.5, my+0.2);
   });
 
-  // Separador vertical entre ministérios e categorias
-  const col2X = L + 68;
-  doc.setLineWidth(0.3); doc.line(col2X, secY, col2X, secY+secH);
+  // ── Separador col1/col2 (linha vertical) ──
+  const col2X = ML + col1W;
+  doc.setLineWidth(0.3);
+  doc.line(col2X, secY, col2X, secBot);
 
-  // Categorias (coluna 2)
+  // ── COL 2: Categorias (largura ~42mm) ──
+  const col2W = 42;
   const categoriasAll = ['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'];
-  const catSpacing = secH / (categoriasAll.length + 1);
+  const catSpacing = secH / categoriasAll.length;
   categoriasAll.forEach((cat, i) => {
-    const cy = secY + catSpacing * (i + 0.8);
+    const cy = secY + catSpacing * i + catSpacing * 0.65;
     const checked = (d.categorias||[]).includes(cat);
-    doc.setLineWidth(0.3); doc.rect(col2X+3, cy-2.5, 3.5, 3.5);
-    if (checked) { doc.setFont('helvetica','bold'); doc.text('✓', col2X+3.4, cy+0.5); doc.setFont('helvetica','normal'); }
-    doc.setFontSize(6.5); doc.text(cat, col2X+8, cy+0.5);
+    doc.setLineWidth(0.35); doc.rect(col2X+2, cy-2.8, 3.5, 3.5);
+    if (checked) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
+      doc.text('X', col2X+3.2, cy+0.2);
+    }
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(0);
+    doc.text(cat, col2X+7.5, cy+0.2);
   });
 
-  // Separador vertical entre categorias e solicitante
-  const col3X = L + 118;
-  doc.setLineWidth(0.3); doc.line(col3X, secY, col3X, secY+secH);
+  // ── Separador col2/col3 ──
+  const col3X = col2X + col2W;
+  doc.setLineWidth(0.3);
+  doc.line(col3X, secY, col3X, secBot);
 
-  // Solicitante / Data (coluna 3)
-  doc.setFont('helvetica','bold'); doc.setFontSize(7);
-  doc.text('DATA DA SOLICITAÇÃO', col3X+2, secY+6);
-  // Linha de data
-  const dataStr = d.dataSolicitacao ? fD(d.dataSolicitacao) : '___/___/______';
-  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
-  doc.text(dataStr, col3X+10, secY+13);
-  doc.setLineWidth(0.3); doc.line(col3X+2, secY+14, R-2, secY+14);
+  // ── COL 3: Data + Solicitante ──
+  const col3W = PW - col1W - col2W;
+  const col3CX = col3X + col3W/2; // centro da coluna
 
-  // Nome solicitante
-  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
-  doc.text(d.nomeSolicitante||'', col3X+2, secY+22);
-  doc.setLineWidth(0.3); doc.line(col3X+2, secY+23, R-2, secY+23);
-  doc.setFont('helvetica','bold'); doc.setFontSize(7);
-  doc.text('NOME DO SOLICITANTE', col3X+2+((R-2-(col3X+2))/2), secY+27, {align:'center'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(6.5);
-  doc.text('(POR EXTENSO)', col3X+2+((R-2-(col3X+2))/2), secY+30.5, {align:'center'});
+  // DATA DA SOLICITAÇÃO — label negrito centralizado
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(0);
+  doc.text('DATA DA SOLICITAÇÃO', col3CX, secY+5, {align:'center'});
 
-  // ── TABELA DE ITENS ──
-  const tableY = secY + secH;
-  const colWidths = { num:12, desc:130, und:22, qtd:18 };
-  const rowH = 6.5;
+  // Linha para data
+  const dataLinha = secY + 13;
+  const dataStr = d.dataSolicitacao ? fD(d.dataSolicitacao) : '';
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  if (dataStr) doc.text(dataStr, col3CX, dataLinha-1, {align:'center'});
+  doc.setLineWidth(0.4);
+  doc.line(col3X+4, dataLinha, ML+PW-4, dataLinha);
+
+  // Linha para nome (mais abaixo)
+  const nomeLinha = secY + 24;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  if (d.nomeSolicitante) doc.text(d.nomeSolicitante, col3CX, nomeLinha-1, {align:'center'});
+  doc.setLineWidth(0.4);
+  doc.line(col3X+4, nomeLinha, ML+PW-4, nomeLinha);
+
+  // Labels NOME DO SOLICITANTE
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+  doc.text('NOME DO SOLICITANTE', col3CX, nomeLinha+5, {align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  doc.text('(POR EXTENSO)', col3CX, nomeLinha+9, {align:'center'});
+
+  // ══════════════════════════════════════
+  // TABELA DE ITENS
+  // ══════════════════════════════════════
+  const tblY = secBot;
   const numLinhas = 25;
-  const headerH = 7;
+
+  // Larguras das colunas (total = PW = 186)
+  const cNum  = 14;   // ITEM
+  const cDesc = 130;  // DESCRIÇÃO
+  const cUnd  = 22;   // UND
+  const cQtd  = PW - cNum - cDesc - cUnd; // QNTD (~20)
+  const rowH  = 6.2;
+  const hdrH  = 7.5;
 
   // Cabeçalho da tabela
-  doc.setFillColor(0,0,0); doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold'); doc.setFontSize(7);
-  // Células do cabeçalho
-  let cx = L;
-  [['ITEM',colWidths.num],['DESCRIÇÃO',colWidths.desc],['UND',colWidths.und],['QNTD',colWidths.qtd]].forEach(([lbl,w])=>{
-    doc.setFillColor(0); doc.rect(cx, tableY, w, headerH, 'FD');
-    doc.text(lbl, cx+w/2, tableY+4.5, {align:'center'});
-    cx += w;
+  const cols = [{l:'ITEM',w:cNum},{l:'DESCRIÇÃO',w:cDesc},{l:'UND',w:cUnd},{l:'QNTD',w:cQtd}];
+  let cx = ML;
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(0);
+  cols.forEach(col => {
+    doc.setDrawColor(0); doc.setLineWidth(0.4);
+    doc.rect(cx, tblY, col.w, hdrH);
+    doc.text(col.l, cx + col.w/2, tblY + hdrH/2 + 2.5, {align:'center'});
+    cx += col.w;
   });
 
   // Linhas de itens
-  doc.setTextColor(0); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(0);
   for (let i = 0; i < numLinhas; i++) {
-    const iy = tableY + headerH + i * rowH;
+    const ry = tblY + hdrH + i * rowH;
     const it = (d.itens||[])[i];
-    // Fundo alternado
-    if (i % 2 === 0) { doc.setFillColor(255,255,255); } else { doc.setFillColor(248,248,248); }
-    doc.rect(L, iy, W, rowH, 'F');
-    // Bordas
+
+    // Bordas das células
     doc.setDrawColor(180); doc.setLineWidth(0.2);
-    doc.rect(L, iy, colWidths.num, rowH);
-    doc.rect(L+colWidths.num, iy, colWidths.desc, rowH);
-    doc.rect(L+colWidths.num+colWidths.desc, iy, colWidths.und, rowH);
-    doc.rect(L+colWidths.num+colWidths.desc+colWidths.und, iy, colWidths.qtd, rowH);
-    // Número
-    doc.setTextColor(100); doc.text(String(i+1), L+colWidths.num/2, iy+4.5, {align:'center'});
+    doc.rect(ML,            ry, cNum,  rowH);
+    doc.rect(ML+cNum,       ry, cDesc, rowH);
+    doc.rect(ML+cNum+cDesc, ry, cUnd,  rowH);
+    doc.rect(ML+cNum+cDesc+cUnd, ry, cQtd, rowH);
+
+    // Número da linha
+    doc.setTextColor(80); doc.setFontSize(7);
+    doc.text(String(i+1), ML+cNum/2, ry+rowH/2+2, {align:'center'});
+
+    // Dados do item
     if (it && it.desc) {
       doc.setTextColor(0);
-      // Descrição (truncar se muito longo)
-      const descTxt = doc.splitTextToSize(it.desc, colWidths.desc-3)[0];
-      doc.text(descTxt, L+colWidths.num+2, iy+4.5);
-      doc.text(it.und||'', L+colWidths.num+colWidths.desc+colWidths.und/2, iy+4.5, {align:'center'});
-      doc.text(String(it.qtd||''), L+colWidths.num+colWidths.desc+colWidths.und+colWidths.qtd/2, iy+4.5, {align:'center'});
+      const descTxt = doc.splitTextToSize(it.desc, cDesc-4)[0];
+      doc.text(descTxt, ML+cNum+2, ry+rowH/2+2);
+      if (it.und) doc.text(it.und, ML+cNum+cDesc+cUnd/2, ry+rowH/2+2, {align:'center'});
+      if (it.qtd) doc.text(String(it.qtd), ML+cNum+cDesc+cUnd+cQtd/2, ry+rowH/2+2, {align:'center'});
     }
-    doc.setDrawColor(0);
   }
 
-  // ── OBSERVAÇÃO ──
-  const obsY = tableY + headerH + numLinhas * rowH;
-  const obsH = 22;
-  doc.setDrawColor(0); doc.setLineWidth(0.3);
-  doc.rect(L, obsY, W, obsH);
-  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(0);
-  doc.text('OBSERVAÇÃO:', L+2, obsY+4);
+  // ══════════════════════════════════════
+  // OBSERVAÇÃO
+  // ══════════════════════════════════════
+  const obsY = tblY + hdrH + numLinhas * rowH;
+  const obsH = 20;
+  doc.setDrawColor(0); doc.setLineWidth(0.35);
+  doc.rect(ML, obsY, PW, obsH);
+  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
+  doc.text('OBSERVAÇÃO:', ML+2, obsY+4.5);
   if (d.obs) {
     doc.setFont('helvetica','normal'); doc.setFontSize(7);
-    const obsLines = doc.splitTextToSize(d.obs, W-6);
-    doc.text(obsLines, L+2, obsY+9);
+    const obsLines = doc.splitTextToSize(d.obs, PW-8);
+    doc.text(obsLines, ML+2, obsY+9);
   }
 
-  // ── RODAPÉ ASSINATURAS ──
-  const rodY = obsY + obsH;
-  const rodH = 287 - rodY; // até o fim da borda externa
-  const colW3 = W / 3;
-
-  doc.setDrawColor(0); doc.setLineWidth(0.3);
-  // Separadores verticais
-  doc.line(L + colW3, rodY, L + colW3, rodY + rodH);
-  doc.line(L + colW3*2, rodY, L + colW3*2, rodY + rodH);
+  // ══════════════════════════════════════
+  // RODAPÉ — ASSINATURAS
+  // fora da borda externa, abaixo
+  // ══════════════════════════════════════
+  const rodY = obsY + obsH + 8;
+  const col3Wd = PW / 3;
 
   const sigs = [
-    {l:'MINISTÉRIO LOCAL',   img:d.sigMin, n:d.nomeMin,  dataField:'dataMin'},
-    {l:'APROVAÇÃO TÉCNICA',  img:d.sigTec, n:d.nomeTec,  dataField:'dataTec'},
-    {l:'APROVAÇÃO ADM',      img:d.sigMan, n:d.nomeMan,  dataField:'dataMan'},
+    {l:'MINISTÉRIO LOCAL',  img:d.sigMin, n:d.nomeMin},
+    {l:'APROVAÇÃO TÉCNICA', img:d.sigTec, n:d.nomeTec},
+    {l:'APROVAÇÃO ADM',     img:d.sigMan, n:d.nomeMan},
   ];
 
   sigs.forEach((sg, i) => {
-    const sx = L + i * colW3;
-    const cw = colW3;
-    const sigLineY = rodY + rodH - 20;
+    const sx = ML + i * col3Wd;
+    const cw = col3Wd;
+    const cx2 = sx + cw/2;
+    const linhaY = rodY + 10;
 
-    // Linha de assinatura
-    doc.setLineWidth(0.4);
-    doc.line(sx+4, sigLineY, sx+cw-4, sigLineY);
-
-    // Imagem da assinatura (acima da linha)
+    // Imagem da assinatura ACIMA da linha
     if (sg.img) {
       try {
-        const imgH = 14; const imgW = cw - 10;
-        doc.addImage(sg.img,'JPEG', sx+5, sigLineY-imgH-1, imgW, imgH);
+        doc.addImage(sg.img,'JPEG', sx+4, linhaY-13, cw-8, 12);
       } catch(e){}
     }
 
-    // Nome do assinante
+    // Linha de assinatura
+    doc.setDrawColor(0); doc.setLineWidth(0.5);
+    doc.line(sx+4, linhaY, sx+cw-4, linhaY);
+
+    // Nome do assinante abaixo da linha
     if (sg.n) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(0);
-      doc.text(sg.n, sx + cw/2, sigLineY+3.5, {align:'center'});
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
+      doc.text(sg.n, cx2, linhaY+4, {align:'center'});
     }
 
-    // Label
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(0);
-    doc.text(sg.l, sx + cw/2, sigLineY+8, {align:'center'});
+    // Label (MINISTÉRIO LOCAL etc)
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(0);
+    doc.text(sg.l, cx2, linhaY+9, {align:'center'});
 
     // DATA
     doc.setFont('helvetica','normal'); doc.setFontSize(7);
-    doc.text('DATA ______/______/_________', sx + cw/2, sigLineY+13, {align:'center'});
+    doc.text('DATA ______/______/_________', cx2, linhaY+14, {align:'center'});
   });
 
   doc.save('Req_CCB_' + fN(d.num) + '.pdf');
