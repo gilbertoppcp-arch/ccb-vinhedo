@@ -22,43 +22,61 @@
   .editor-wrapper {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 24px 16px;
+    padding: 0 16px 24px;
+  }
+  .editor-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: #f0f2f7;
+    padding-top: 24px;
+    padding-bottom: 6px;
   }
 
   .editor-topbar {
-    background: var(--azul);
+    background: #1a3a6b;
     color: #fff;
-    padding: 14px 22px;
+    padding: 10px 20px;
     border-radius: 10px 10px 0 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
   .editor-topbar h1 {
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: .5px;
+    font-size: .9rem;
+    font-weight: 600;
+    letter-spacing: .3px;
+    color: rgba(255,255,255,.9);
   }
   .editor-topbar .btns {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     flex-wrap: wrap;
+    align-items: center;
   }
   .btn {
-    padding: 8px 18px;
-    border: none;
+    padding: 6px 14px;
+    border: 1px solid rgba(255,255,255,.2);
     border-radius: 6px;
-    font-size: .85rem;
-    font-weight: 600;
+    font-size: .8rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: filter .15s, transform .1s;
+    background: rgba(255,255,255,.1);
+    color: #fff;
+    transition: background .15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
-  .btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
-  .btn-print { background: #27ae60; color: #fff; }
-  .btn-clear { background: #c0392b; color: #fff; }
-  .btn-base { background: #f39c12; color: #fff; }
+  .btn:hover { background: rgba(255,255,255,.2); }
+  .btn-print { background: rgba(255,255,255,.12); }
+  .btn-clear { background: rgba(255,255,255,.08); }
+  .btn-base  { background: rgba(255,255,255,.08); }
 
   .editor-body {
     background: #fff;
@@ -619,29 +637,30 @@
 
 <!-- ===== INTERFACE DE EDIÇÃO ===== -->
 <div class="editor-wrapper no-print">
+  <div class="editor-sticky">
   <div class="editor-topbar">
     <h1>📋 Requisição de Compras — Administração Vinhedo</h1>
     <div class="btns">
-      <button class="btn btn-base" onclick="abrirBase()">⚙️ Base de Itens</button>
-      <button class="btn" style="background:#7b5ea7;color:#fff;" onclick="abrirListaReqs()">📋 Requisições</button>
-      <button class="btn btn-clear" onclick="limparFormulario()">🗑️ Limpar</button>
-      <button class="btn btn-print" onclick="salvarESalvar()">💾 Salvar</button>
-      <button class="btn btn-print" onclick="imprimir()">🖨️ Imprimir PDF</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:rgba(255,255,255,.7);">
-      <div id="syncDot" style="width:8px;height:8px;border-radius:50%;background:#6ee7b7;" title="Verificando..."></div>
-      <span id="syncTxt">Verificando...</span>
+      <button class="btn btn-base" onclick="abrirBase()">Base de Itens</button>
+      <button class="btn" onclick="abrirListaReqs()">Requisições</button>
+      <button class="btn btn-clear" onclick="limparFormulario()">Limpar</button>
+      <button class="btn btn-print" onclick="salvarESalvar()">Salvar</button>
+      <button class="btn btn-print" onclick="imprimir()">Imprimir PDF</button>
+      <div style="display:flex;align-items:center;gap:5px;font-size:.75rem;color:rgba(255,255,255,.6);margin-left:4px;">
+        <div id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#6ee7b7;flex-shrink:0;"></div>
+        <span id="syncTxt">Verificando...</span>
+      </div>
     </div>
   </div>
 
   <div class="editor-body">
 
     <!-- NÚMERO DA REQUISIÇÃO -->
-    <div style="display:flex;align-items:center;justify-content:space-between;background:#1a3a6b;border-radius:8px;padding:10px 18px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#1a3a6b;border-radius:0 0 8px 8px;padding:10px 18px;">
       <span style="color:rgba(255,255,255,.6);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Próximo Nº</span>
       <span id="numReqDisplay" style="color:#f6c94e;font-size:1.4rem;font-weight:800;font-family:monospace;letter-spacing:2px;">0001</span>
-      <button onclick="compartilharApp()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:6px;padding:5px 12px;font-size:.78rem;cursor:pointer;">📲 Compartilhar App</button>
     </div>
+  </div><!-- /editor-sticky -->
 
     <!-- SEÇÃO SUPERIOR -->
     <div class="secao-topo">
