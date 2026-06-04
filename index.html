@@ -2253,201 +2253,193 @@ function confirmarAssinatura() {
     .catch(() => { setDot('off'); showToast('⚠️ Salvo localmente. Sem conexão.'); });
 }
 
-// ===== GERAR PDF =====
+// ===== GERAR PDF — HTML idêntico ao original =====
 function gerarPDFReq(idx) {
   const d = DB.requisicoes[idx];
-  const {jsPDF} = window.jspdf;
-  const doc = new jsPDF('p','mm','a4');
-  const K = [0,0,0];
+  const win = window.open('', '_blank');
 
-  // ═══════════════════════════════════════════
-  // MEDIDAS — baseadas no PDF original
-  // A4: 210×297mm, margens: L=13, T=11, R=13
-  // ═══════════════════════════════════════════
-  const ML=13, MT=11, PW=184; // largura útil
+  const mins = ['NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA',
+                'RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'];
+  const cats = ['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'];
 
-  // 1. BORDA EXTERNA
-  doc.setDrawColor(...K); doc.setLineWidth(0.7);
-  doc.rect(ML, MT, PW, 253); // altura da borda principal
+  const chkMin = mins.map(m => {
+    const ok = (d.ministerios||[]).includes(m);
+    return `<div class="chk-row"><div class="chk ${ok?'chk-ok':''}">${ok?'X':''}</div><span>${m}</span></div>`;
+  }).join('');
 
-  // 2. CABEÇALHO — borda interna dupla
-  const hY=MT+3.5, hH=19;
-  doc.setLineWidth(0.55);
-  doc.rect(ML+3, hY, PW-6, hH);
-  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...K);
-  doc.text('CONGREGAÇÃO CRISTÃ NO BRASIL', ML+PW/2, hY+9, {align:'center'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
-  doc.text('REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO', ML+PW/2, hY+16, {align:'center'});
+  const chkCat = cats.map(c => {
+    const ok = (d.categorias||[]).includes(c);
+    return `<div class="chk-row"><div class="chk ${ok?'chk-ok':''}">${ok?'X':''}</div><span>${c}</span></div>`;
+  }).join('');
 
-  // 3. SEÇÃO IGREJAS / CATEGORIAS / SOLICITANTE
-  // Sem bordas entre colunas — apenas conteúdo
-  const secY = hY+hH+6;  // espaço após cabeçalho
-  const secH = 42;        // altura da seção
+  let dataStr = '_______ / _______ / _______';
+  if(d.dataSolicitacao){ const [y,m,dd]=d.dataSolicitacao.split('-'); dataStr=`${dd} / ${m} / ${y}`; }
 
-  // Col1: Igrejas — checkboxes retangulares largos (10×5.5mm)
-  const c1W=72, c2W=50, c3X=ML+c1W+c2W;
-  const c3W=PW-c1W-c2W, c3CX=c3X+c3W/2;
-  const igrejas=['NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA',
-                 'RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'];
-  const iSp=secH/igrejas.length;
-  igrejas.forEach((m,i)=>{
-    const my=secY+iSp*i+iSp*0.65;
-    const ok=(d.ministerios||[]).includes(m);
-    doc.setDrawColor(...K); doc.setLineWidth(0.5);
-    doc.rect(ML+1.5, my-3.8, 10, 5.5); // retangular largo
-    if(ok){ doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...K);
-      doc.text('X', ML+5.5, my+0.7); }
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...K);
-    doc.text(m, ML+13.5, my+0.5);
-  });
-
-  // Col2: Categorias — mesmo estilo de checkbox
-  const c2X=ML+c1W;
-  const cats=['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'];
-  const cSp=secH/cats.length;
-  cats.forEach((cat,i)=>{
-    const cy=secY+cSp*i+cSp*0.65;
-    const ok=(d.categorias||[]).includes(cat);
-    doc.setDrawColor(...K); doc.setLineWidth(0.5);
-    doc.rect(c2X+1.5, cy-3.8, 10, 5.5);
-    if(ok){ doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...K);
-      doc.text('X', c2X+5.5, cy+0.7); }
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...K);
-    doc.text(cat, c2X+13.5, cy+0.5);
-  });
-
-  // Col3: Data + Solicitante
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...K);
-  doc.text('DATA DA SOLICITAÇÃO', c3CX, secY+7, {align:'center'});
-
-  // Linha da data
-  doc.setDrawColor(...K); doc.setLineWidth(0.5);
-  doc.line(c3X+3, secY+17, ML+PW-4, secY+17);
-  if(d.dataSolicitacao){
-    const [y,m,dd]=d.dataSolicitacao.split('-');
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...K);
-    doc.text(`${dd} / ${m} / ${y}`, c3CX, secY+16.5, {align:'center'});
-  }
-
-  // Linha do nome
-  doc.setLineWidth(0.5);
-  doc.line(c3X+3, secY+29, ML+PW-4, secY+29);
-  if(d.nomeSolicitante){
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...K);
-    doc.text(d.nomeSolicitante, c3CX, secY+28.5, {align:'center'});
-  }
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...K);
-  doc.text('NOME DO SOLICITANTE', c3CX, secY+34.5, {align:'center'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
-  doc.text('(POR EXTENSO)', c3CX, secY+40, {align:'center'});
-
-  // 4. TABELA — cabeçalho com borda dupla
-  const tY=secY+secH+2;
-  // Proporções exatas do original:
-  // ITEM ~13mm | DESCRIÇÃO ~120mm | UND ~26mm | QNTD ~25mm
-  const cN=13, cD=120, cU=26, cQ=PW-cN-cD-cU; // ~25mm
-  const tHH=8.5, rH=6.2;
-
-  // Cabeçalho: borda externa grossa
-  doc.setDrawColor(...K); doc.setLineWidth(0.8);
-  doc.rect(ML, tY, PW, tHH);
-  // Cabeçalho: borda interna fina (recuada 1mm = borda dupla visível)
-  doc.setLineWidth(0.3);
-  doc.rect(ML+1, tY+1, PW-2, tHH-2);
-  // Divisores verticais (atravessam as duas bordas)
-  doc.setLineWidth(0.6);
-  doc.line(ML+cN,         tY, ML+cN,         tY+tHH);
-  doc.line(ML+cN+cD,      tY, ML+cN+cD,      tY+tHH);
-  doc.line(ML+cN+cD+cU,   tY, ML+cN+cD+cU,   tY+tHH);
-  // Textos
-  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...K);
-  doc.text('ITEM',     ML+cN/2,              tY+tHH/2+3.3, {align:'center'});
-  doc.text('DESCRIÇÃO',ML+cN+cD/2,           tY+tHH/2+3.3, {align:'center'});
-  doc.text('UND',      ML+cN+cD+cU/2,        tY+tHH/2+3.3, {align:'center'});
-  doc.text('QNTD',     ML+cN+cD+cU+cQ/2,     tY+tHH/2+3.3, {align:'center'});
-
-  // 25 linhas — bordas finas, números cinza, dados pretos
+  // 25 linhas de itens
+  let linhas = '';
   for(let i=0;i<25;i++){
-    const ry=tY+tHH+i*rH;
-    const it=(d.itens||[])[i];
-    doc.setDrawColor(...K); doc.setLineWidth(0.3);
-    doc.rect(ML,           ry, cN, rH);
-    doc.rect(ML+cN,        ry, cD, rH);
-    doc.rect(ML+cN+cD,     ry, cU, rH);
-    doc.rect(ML+cN+cD+cU,  ry, cQ, rH);
-    // Número — cinza claro, centralizado
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(100,100,100);
-    doc.text(String(i+1), ML+cN/2, ry+rH/2+3, {align:'center'});
-    // Dados — preto
-    if(it && it.desc){
-      doc.setTextColor(...K); doc.setFontSize(9);
-      doc.text(doc.splitTextToSize(it.desc, cD-3)[0], ML+cN+2, ry+rH/2+3);
-      if(it.und) doc.text(it.und, ML+cN+cD+cU/2,       ry+rH/2+3, {align:'center'});
-      if(it.qtd) doc.text(String(it.qtd), ML+cN+cD+cU+cQ/2, ry+rH/2+3, {align:'center'});
-    }
+    const it = (d.itens||[])[i];
+    linhas += `<tr>
+      <td class="td-num">${i+1}</td>
+      <td class="td-desc">${it&&it.desc?it.desc:''}</td>
+      <td class="td-und">${it&&it.und?it.und:''}</td>
+      <td class="td-qtd">${it&&it.qtd?it.qtd:''}</td>
+    </tr>`;
   }
 
-  // 5. OBSERVAÇÃO
-  // No original: label "OBSERVAÇÃO:" numa célula com borda pequena própria
-  // + abaixo uma caixa aberta (parte da borda externa)
-  const obsY = tY+tHH+25*rH;
-  const obsLabelH=6;
-  // Label com borda — pequena célula
-  doc.setDrawColor(...K); doc.setLineWidth(0.3);
-  doc.rect(ML, obsY, PW, obsLabelH);
-  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...K);
-  doc.text('OBSERVAÇÃO:', ML+2, obsY+4.2);
-  // Caixa do campo (sem borda superior — já está na célula do label)
-  const obsBoxH = MT+253-(obsY+obsLabelH); // até o fim da borda externa
-  // bordas laterais e inferior da caixa
-  doc.setLineWidth(0.3);
-  doc.line(ML,           obsY+obsLabelH, ML,           obsY+obsLabelH+obsBoxH);
-  doc.line(ML+PW,        obsY+obsLabelH, ML+PW,        obsY+obsLabelH+obsBoxH);
-  doc.line(ML, obsY+obsLabelH+obsBoxH, ML+PW, obsY+obsLabelH+obsBoxH);
-  if(d.obs){
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...K);
-    doc.text(doc.splitTextToSize(d.obs, PW-4), ML+2, obsY+obsLabelH+6);
-  }
+  // Assinaturas
+  const sigBlock = (label, img, nome, dataField) => {
+    const dataVal = dataField && d[dataField] ? 'DATA&nbsp;&nbsp;' + fD(d[dataField]) : 'DATA ______/______/_________';
+    return `<div class="sig-col">
+      ${img ? `<img src="${img}" class="sig-img">` : ''}
+      <div class="sig-line"></div>
+      ${nome ? `<div class="sig-nome">${nome}</div>` : ''}
+      <div class="sig-label">${label}</div>
+      <div class="sig-data">${dataVal}</div>
+    </div>`;
+  };
 
-  // 6. RODAPÉ — FORA da borda principal
-  // No original: linha horizontal longa + label abaixo + DATA abaixo do label
-  const rodY = MT+253+8;
-  const cW = PW/3;
-  const sigs=[
-    {l:'MINISTÉRIO LOCAL',  img:d.sigMin, n:d.nomeMin, df:'dataMin'},
-    {l:'APROVAÇÃO TÉCNICA', img:d.sigTec, n:d.nomeTec, df:'dataTec'},
-    {l:'APROVAÇÃO ADM',     img:d.sigMan, n:d.nomeMan, df:'dataMan'},
-  ];
-  sigs.forEach((sg,i)=>{
-    const sx=ML+i*cW, cx=sx+cW/2;
-    const lY=rodY+12; // posição da linha de assinatura
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Req CCB ${fN(d.num)}</title>
+<style>
+@page { size: A4 portrait; margin: 11mm 13mm 10mm 13mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #000; background: #fff; }
 
-    // Imagem da assinatura acima da linha
-    if(sg.img){ try{ doc.addImage(sg.img,'JPEG',sx+5,lY-13,cW-10,12); }catch(e){} }
+/* BORDA EXTERNA */
+.form-outer {
+  border: 1.5px solid #000;
+  width: 100%;
+}
 
-    // Linha de assinatura — comprimento moderado
-    doc.setDrawColor(...K); doc.setLineWidth(0.55);
-    doc.line(sx+3, lY, sx+cW-3, lY);
+/* CABEÇALHO */
+.hdr { padding: 5pt 4pt 4pt; }
+.hdr-inner {
+  border: 1.2px solid #000;
+  text-align: center;
+  padding: 5pt 4pt 4pt;
+}
+.hdr-title { font-size: 14pt; font-weight: 900; letter-spacing: .3pt; }
+.hdr-sub { font-size: 8.5pt; font-weight: 400; letter-spacing: .8pt; margin-top: 3pt; color: #333; }
 
-    // Nome do assinante logo abaixo da linha
-    if(sg.n){
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...K);
-      doc.text(sg.n, cx, lY+4.5, {align:'center'});
-    }
+/* SEÇÃO IGREJAS/CAT/SOL */
+.sec {
+  display: flex;
+  padding: 6pt 4pt 4pt;
+  border-top: 1px solid #000;
+}
+.sec-igrejas { flex: 0 0 38%; }
+.sec-cats    { flex: 0 0 26%; }
+.sec-sol     { flex: 1; text-align: center; }
 
-    // Label (MINISTÉRIO LOCAL etc)
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...K);
-    doc.text(sg.l, cx, lY+(sg.n?10:5.5), {align:'center'});
+.chk-row { display: flex; align-items: center; gap: 5pt; margin-bottom: 3.5pt; }
+.chk {
+  width: 10pt; height: 6pt;
+  border: 1pt solid #000;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 7pt; font-weight: 900; flex-shrink: 0;
+}
+.chk.chk-ok { }
+.chk-row span { font-size: 7pt; }
 
-    // DATA
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...K);
-    const dv = sg.df && d[sg.df]
-      ? 'DATA  ' + fD(d[sg.df])
-      : 'DATA ______/______/_________';
-    doc.text(dv, cx, lY+(sg.n?15.5:11), {align:'center'});
-  });
+.sol-label { font-weight: 700; font-size: 8pt; margin-bottom: 3pt; }
+.sol-line  { border-bottom: 1pt solid #000; width: 85%; margin: 0 auto 2pt; min-height: 10pt;
+             display: flex; align-items: flex-end; justify-content: center; font-size: 8pt; padding-bottom: 1pt; }
+.sol-sublabel { font-weight: 700; font-size: 8pt; margin-top: 3pt; }
+.sol-subsub   { font-size: 7.5pt; }
 
-  doc.save('Req_CCB_'+fN(d.num)+'.pdf');
+/* TABELA */
+.tbl { width: 100%; border-collapse: collapse; border-top: 1px solid #000; }
+.tbl thead tr th {
+  border: 1.5px solid #000;
+  padding: 4pt 3pt;
+  font-size: 9pt; font-weight: 700; text-align: center;
+}
+/* Borda dupla no cabeçalho via outline interno */
+.tbl thead { outline: 1pt solid #000; outline-offset: -2pt; }
+
+.td-num  { width: 28pt; text-align: center; font-size: 8.5pt; color: #555; border: 0.5px solid #000; padding: 0 2pt; height: 13.5pt; vertical-align: middle; }
+.td-desc { border: 0.5px solid #000; padding: 0 3pt; font-size: 8.5pt; vertical-align: middle; }
+.td-und  { width: 38pt; text-align: center; border: 0.5px solid #000; padding: 0 2pt; font-size: 8.5pt; vertical-align: middle; }
+.td-qtd  { width: 34pt; text-align: center; border: 0.5px solid #000; padding: 0 2pt; font-size: 8.5pt; vertical-align: middle; }
+
+/* OBSERVAÇÃO */
+.obs-row { border-top: 0.5px solid #000; padding: 2pt 4pt 0; display: flex; align-items: flex-start; gap: 4pt; }
+.obs-label-cell { border: 0.5px solid #555; padding: 1pt 4pt; font-size: 7.5pt; font-weight: 700; white-space: nowrap; }
+.obs-box { border: 0.5px solid #000; min-height: 28pt; width: 100%; margin: 4pt 0 0; padding: 3pt 4pt; font-size: 8pt; }
+
+/* RODAPÉ — fora da borda externa */
+.rodape { display: flex; margin-top: 12pt; }
+.sig-col { flex: 1; text-align: center; padding: 0 4pt; }
+.sig-img { height: 26pt; max-width: 90%; object-fit: contain; display: block; margin: 0 auto 2pt; }
+.sig-line { border-top: 1pt solid #000; width: 80%; margin: 0 auto 3pt; }
+.sig-nome  { font-size: 7pt; font-weight: 700; margin-bottom: 2pt; }
+.sig-label { font-size: 8.5pt; font-weight: 700; margin-bottom: 2pt; }
+.sig-data  { font-size: 7.5pt; }
+</style>
+</head>
+<body>
+
+<div class="form-outer">
+
+  <!-- CABEÇALHO -->
+  <div class="hdr">
+    <div class="hdr-inner">
+      <div class="hdr-title">CONGREGAÇÃO CRISTÃ NO BRASIL</div>
+      <div class="hdr-sub">REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO</div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO -->
+  <div class="sec">
+    <div class="sec-igrejas">${chkMin}</div>
+    <div class="sec-cats">${chkCat}</div>
+    <div class="sec-sol">
+      <div class="sol-label">DATA DA SOLICITAÇÃO</div>
+      <div class="sol-line">${dataStr}</div>
+      <div class="sol-line" style="margin-top:8pt;">${d.nomeSolicitante||''}</div>
+      <div class="sol-sublabel">NOME DO SOLICITANTE</div>
+      <div class="sol-subsub">(POR EXTENSO)</div>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th style="width:28pt">ITEM</th>
+        <th>DESCRIÇÃO</th>
+        <th style="width:38pt">UND</th>
+        <th style="width:34pt">QNTD</th>
+      </tr>
+    </thead>
+    <tbody>${linhas}</tbody>
+  </table>
+
+  <!-- OBSERVAÇÃO -->
+  <div class="obs-row">
+    <span class="obs-label-cell">OBSERVAÇÃO:</span>
+  </div>
+  <div class="obs-box">${d.obs||''}</div>
+
+</div>
+
+<!-- RODAPÉ -->
+<div class="rodape">
+  ${sigBlock('MINISTÉRIO LOCAL', d.sigMin, d.nomeMin, 'dataMin')}
+  ${sigBlock('APROVAÇÃO TÉCNICA', d.sigTec, d.nomeTec, 'dataTec')}
+  ${sigBlock('APROVAÇÃO ADM', d.sigMan, d.nomeMan, 'dataMan')}
+</div>
+
+<script>window.onload = () => setTimeout(() => window.print(), 400);<\/script>
+</body>
+</html>`;
+
+  win.document.write(html);
+  win.document.close();
   showToast('📄 PDF gerado!');
 }
 
