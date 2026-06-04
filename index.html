@@ -2294,10 +2294,10 @@ function gerarPDFReq(idx) {
     const my=secY+minSp*i+minSp*0.72;
     const chk=(d.ministerios||[]).includes(m);
     doc.setDrawColor(...K); doc.setLineWidth(0.5);
-    doc.rect(ML+2, my-3.5, 5, 5);
-    if(chk){ doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...K); doc.text('X',ML+3.5,my+1); }
+    doc.rect(ML+1, my-3.3, 8, 4.6);
+    if(chk){ doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...K); doc.text('X',ML+4,my+0.7); }
     doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...K);
-    doc.text(m, ML+9, my+0.7);
+    doc.text(m, ML+12, my+0.5);
   });
 
   // ════════════════════════
@@ -2310,10 +2310,10 @@ function gerarPDFReq(idx) {
     const cy=secY+catSp*i+catSp*0.72;
     const chk=(d.categorias||[]).includes(cat);
     doc.setDrawColor(...K); doc.setLineWidth(0.5);
-    doc.rect(col2X+2, cy-3.5, 5, 5);
-    if(chk){ doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...K); doc.text('X',col2X+3.5,cy+1); }
+    doc.rect(col2X+1, cy-3.3, 8, 4.6);
+    if(chk){ doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...K); doc.text('X',col2X+4,cy+0.7); }
     doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...K);
-    doc.text(cat, col2X+9, cy+0.7);
+    doc.text(cat, col2X+12, cy+0.5);
   });
 
   // ════════════════════════
@@ -2347,7 +2347,7 @@ function gerarPDFReq(idx) {
   // ════════════════════════
   // TABELA — cabeçalho duplo
   // ════════════════════════
-  const cNum=16, cDesc=122, cUnd=24, cQtd=PW-cNum-cDesc-cUnd; // ~20
+  const cNum=13, cDesc=125, cUnd=24, cQtd=PW-cNum-cDesc-cUnd; // ~20
 
   // Borda externa grossa
   doc.setDrawColor(...K); doc.setLineWidth(0.8);
