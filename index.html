@@ -2253,7 +2253,7 @@ function confirmarAssinatura() {
     .catch(() => { setDot('off'); showToast('⚠️ Salvo localmente. Sem conexão.'); });
 }
 
-// ===== GERAR PDF — HTML idêntico ao original =====
+// ===== GERAR PDF — idêntico ao impresso das 19h =====
 function gerarPDFReq(idx) {
   const d = DB.requisicoes[idx];
   const win = window.open('', '_blank');
@@ -2264,38 +2264,36 @@ function gerarPDFReq(idx) {
 
   const chkMin = mins.map(m => {
     const ok = (d.ministerios||[]).includes(m);
-    return `<div class="chk-row"><div class="chk ${ok?'chk-ok':''}">${ok?'X':''}</div><span>${m}</span></div>`;
+    return `<div class="chk-row"><div class="chk">${ok?'<b>X</b>':''}</div><span>${m}</span></div>`;
   }).join('');
 
   const chkCat = cats.map(c => {
     const ok = (d.categorias||[]).includes(c);
-    return `<div class="chk-row"><div class="chk ${ok?'chk-ok':''}">${ok?'X':''}</div><span>${c}</span></div>`;
+    return `<div class="chk-row"><div class="chk">${ok?'<b>X</b>':''}</div><span>${c}</span></div>`;
   }).join('');
 
-  let dataStr = '_______ / _______ / _______';
+  let dataStr = '';
   if(d.dataSolicitacao){ const [y,m,dd]=d.dataSolicitacao.split('-'); dataStr=`${dd} / ${m} / ${y}`; }
 
-  // 25 linhas de itens
   let linhas = '';
   for(let i=0;i<25;i++){
-    const it = (d.itens||[])[i];
+    const it=(d.itens||[])[i];
     linhas += `<tr>
-      <td class="td-num">${i+1}</td>
-      <td class="td-desc">${it&&it.desc?it.desc:''}</td>
-      <td class="td-und">${it&&it.und?it.und:''}</td>
-      <td class="td-qtd">${it&&it.qtd?it.qtd:''}</td>
+      <td class="c-num">${i+1}</td>
+      <td class="c-desc">${it&&it.desc?it.desc:''}</td>
+      <td class="c-und">${it&&it.und?it.und:''}</td>
+      <td class="c-qtd">${it&&it.qtd?it.qtd:''}</td>
     </tr>`;
   }
 
-  // Assinaturas
-  const sigBlock = (label, img, nome, dataField) => {
-    const dataVal = dataField && d[dataField] ? 'DATA&nbsp;&nbsp;' + fD(d[dataField]) : 'DATA ______/______/_________';
+  const sig = (label, img, nome, df) => {
+    const dv = df&&d[df] ? fD(d[df]) : '____/____/____';
     return `<div class="sig-col">
-      ${img ? `<img src="${img}" class="sig-img">` : ''}
+      ${img?`<img src="${img}" class="sig-img">`:''}
       <div class="sig-line"></div>
-      ${nome ? `<div class="sig-nome">${nome}</div>` : ''}
+      ${nome?`<div class="sig-nome">${nome}</div>`:''}
       <div class="sig-label">${label}</div>
-      <div class="sig-data">${dataVal}</div>
+      <div class="sig-data">DATA ${dv}</div>
     </div>`;
   };
 
@@ -2305,142 +2303,127 @@ function gerarPDFReq(idx) {
 <meta charset="UTF-8">
 <title>Req CCB ${fN(d.num)}</title>
 <style>
-@page { size: A4 portrait; margin: 11mm 13mm 10mm 13mm; }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #000; background: #fff; }
+@page { size:A4 portrait; margin:10mm 13mm 8mm 13mm; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#000;background:#fff;}
 
-/* BORDA EXTERNA */
-.form-outer {
-  border: 1.5px solid #000;
-  width: 100%;
-}
+/* WRAPPER — borda externa */
+.wrap{border:1.5px solid #000;width:100%;}
 
-/* CABEÇALHO */
-.hdr { padding: 5pt 4pt 4pt; }
-.hdr-inner {
-  border: 1.2px solid #000;
-  text-align: center;
-  padding: 5pt 4pt 4pt;
-}
-.hdr-title { font-size: 14pt; font-weight: 900; letter-spacing: .3pt; }
-.hdr-sub { font-size: 8.5pt; font-weight: 400; letter-spacing: .8pt; margin-top: 3pt; color: #333; }
+/* CABEÇALHO — borda interna */
+.hdr{padding:4pt 5pt;}
+.hdr-in{border:1.2px solid #000;text-align:center;padding:6pt 4pt 5pt;}
+.hdr-t{font-size:15pt;font-weight:900;letter-spacing:.3pt;}
+.hdr-s{font-size:8pt;letter-spacing:.8pt;margin-top:3pt;color:#444;}
 
-/* SEÇÃO IGREJAS/CAT/SOL */
-.sec {
-  display: flex;
-  padding: 6pt 4pt 4pt;
-  border-top: 1px solid #000;
-}
-.sec-igrejas { flex: 0 0 38%; }
-.sec-cats    { flex: 0 0 26%; }
-.sec-sol     { flex: 1; text-align: center; }
+/* SEÇÃO IGREJAS */
+.sec{display:flex;padding:5pt 4pt 4pt;border-top:1px solid #000;gap:0;align-items:flex-start;}
+.col-ig{flex:0 0 37%;}
+.col-ct{flex:0 0 27%;}
+.col-sl{flex:1;text-align:center;padding-left:4pt;}
 
-.chk-row { display: flex; align-items: center; gap: 5pt; margin-bottom: 3.5pt; }
-.chk {
-  width: 10pt; height: 6pt;
-  border: 1pt solid #000;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 7pt; font-weight: 900; flex-shrink: 0;
-}
-.chk.chk-ok { }
-.chk-row span { font-size: 7pt; }
+.chk-row{display:flex;align-items:center;gap:5pt;margin-bottom:4pt;}
+.chk{width:11pt;height:6.5pt;border:1pt solid #000;display:inline-flex;
+     align-items:center;justify-content:center;font-size:8pt;flex-shrink:0;}
+.chk-row span{font-size:7.5pt;}
 
-.sol-label { font-weight: 700; font-size: 8pt; margin-bottom: 3pt; }
-.sol-line  { border-bottom: 1pt solid #000; width: 85%; margin: 0 auto 2pt; min-height: 10pt;
-             display: flex; align-items: flex-end; justify-content: center; font-size: 8pt; padding-bottom: 1pt; }
-.sol-sublabel { font-weight: 700; font-size: 8pt; margin-top: 3pt; }
-.sol-subsub   { font-size: 7.5pt; }
+.sl-lbl{font-weight:700;font-size:8.5pt;margin-bottom:3pt;}
+.sl-line{border-bottom:1pt solid #000;min-height:11pt;width:88%;margin:0 auto 2pt;
+         display:flex;align-items:flex-end;justify-content:center;
+         font-size:8.5pt;padding-bottom:1pt;}
+.sl-nome-lbl{font-weight:700;font-size:8.5pt;margin-top:5pt;}
+.sl-nome-sub{font-size:8pt;}
 
 /* TABELA */
-.tbl { width: 100%; border-collapse: collapse; border-top: 1px solid #000; }
-.tbl thead tr th {
-  border: 1.5px solid #000;
-  padding: 4pt 3pt;
-  font-size: 9pt; font-weight: 700; text-align: center;
+.tbl{width:100%;border-collapse:collapse;border-top:1pt solid #000;}
+.tbl thead th{
+  border:1.5pt solid #000;
+  padding:4pt 2pt;font-size:9pt;font-weight:700;text-align:center;
 }
-/* Borda dupla no cabeçalho via outline interno */
-.tbl thead { outline: 1pt solid #000; outline-offset: -2pt; }
+/* borda dupla no cabeçalho */
+.tbl-hdr-wrap{position:relative;}
+.tbl thead{box-shadow:inset 0 0 0 2pt #fff, inset 0 0 0 3pt #000;}
 
-.td-num  { width: 28pt; text-align: center; font-size: 8.5pt; color: #555; border: 0.5px solid #000; padding: 0 2pt; height: 13.5pt; vertical-align: middle; }
-.td-desc { border: 0.5px solid #000; padding: 0 3pt; font-size: 8.5pt; vertical-align: middle; }
-.td-und  { width: 38pt; text-align: center; border: 0.5px solid #000; padding: 0 2pt; font-size: 8.5pt; vertical-align: middle; }
-.td-qtd  { width: 34pt; text-align: center; border: 0.5px solid #000; padding: 0 2pt; font-size: 8.5pt; vertical-align: middle; }
+.c-num{width:26pt;text-align:center;font-size:8.5pt;color:#666;
+       border:0.5pt solid #999;padding:0 2pt;height:14pt;vertical-align:middle;}
+.c-desc{border:0.5pt solid #999;padding:0 3pt;font-size:8.5pt;vertical-align:middle;}
+.c-und{width:36pt;text-align:center;border:0.5pt solid #999;padding:0 2pt;
+       font-size:8.5pt;vertical-align:middle;}
+.c-qtd{width:32pt;text-align:center;border:0.5pt solid #999;padding:0 2pt;
+       font-size:8.5pt;vertical-align:middle;}
 
 /* OBSERVAÇÃO */
-.obs-row { border-top: 0.5px solid #000; padding: 2pt 4pt 0; display: flex; align-items: flex-start; gap: 4pt; }
-.obs-label-cell { border: 0.5px solid #555; padding: 1pt 4pt; font-size: 7.5pt; font-weight: 700; white-space: nowrap; }
-.obs-box { border: 0.5px solid #000; min-height: 28pt; width: 100%; margin: 4pt 0 0; padding: 3pt 4pt; font-size: 8pt; }
+.obs-wrap{border-top:0.5pt solid #000;padding:3pt 4pt 0;}
+.obs-lbl{display:inline-block;border:0.5pt solid #000;padding:1pt 5pt;
+         font-size:8pt;font-weight:700;margin-bottom:3pt;}
+.obs-box{border:0.8pt solid #000;min-height:30pt;padding:3pt 4pt;
+         font-size:8.5pt;margin-bottom:0;}
 
-/* RODAPÉ — fora da borda externa */
-.rodape { display: flex; margin-top: 12pt; }
-.sig-col { flex: 1; text-align: center; padding: 0 4pt; }
-.sig-img { height: 26pt; max-width: 90%; object-fit: contain; display: block; margin: 0 auto 2pt; }
-.sig-line { border-top: 1pt solid #000; width: 80%; margin: 0 auto 3pt; }
-.sig-nome  { font-size: 7pt; font-weight: 700; margin-bottom: 2pt; }
-.sig-label { font-size: 8.5pt; font-weight: 700; margin-bottom: 2pt; }
-.sig-data  { font-size: 7.5pt; }
+/* RODAPÉ */
+.rodape{display:flex;margin-top:14pt;}
+.sig-col{flex:1;text-align:center;padding:0 3pt;}
+.sig-img{max-height:28pt;max-width:92%;object-fit:contain;
+         display:block;margin:0 auto 2pt;}
+.sig-line{border-top:1pt solid #000;width:80%;margin:0 auto 3pt;}
+.sig-nome{font-size:7.5pt;font-weight:700;margin-bottom:2pt;}
+.sig-label{font-size:8.5pt;font-weight:700;margin-bottom:3pt;}
+.sig-data{font-size:8pt;}
 </style>
 </head>
 <body>
 
-<div class="form-outer">
+<div class="wrap">
 
-  <!-- CABEÇALHO -->
   <div class="hdr">
-    <div class="hdr-inner">
-      <div class="hdr-title">CONGREGAÇÃO CRISTÃ NO BRASIL</div>
-      <div class="hdr-sub">REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO</div>
+    <div class="hdr-in">
+      <div class="hdr-t">CONGREGAÇÃO CRISTÃ NO BRASIL</div>
+      <div class="hdr-s">REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO</div>
     </div>
   </div>
 
-  <!-- SEÇÃO -->
   <div class="sec">
-    <div class="sec-igrejas">${chkMin}</div>
-    <div class="sec-cats">${chkCat}</div>
-    <div class="sec-sol">
-      <div class="sol-label">DATA DA SOLICITAÇÃO</div>
-      <div class="sol-line">${dataStr}</div>
-      <div class="sol-line" style="margin-top:8pt;">${d.nomeSolicitante||''}</div>
-      <div class="sol-sublabel">NOME DO SOLICITANTE</div>
-      <div class="sol-subsub">(POR EXTENSO)</div>
+    <div class="col-ig">${chkMin}</div>
+    <div class="col-ct">${chkCat}</div>
+    <div class="col-sl">
+      <div class="sl-lbl">DATA DA SOLICITAÇÃO</div>
+      <div class="sl-line">${dataStr}</div>
+      <div class="sl-line" style="margin-top:6pt;">${d.nomeSolicitante||''}</div>
+      <div class="sl-nome-lbl">NOME DO SOLICITANTE</div>
+      <div class="sl-nome-sub">(POR EXTENSO)</div>
     </div>
   </div>
 
-  <!-- TABELA -->
   <table class="tbl">
     <thead>
       <tr>
-        <th style="width:28pt">ITEM</th>
+        <th style="width:26pt">ITEM</th>
         <th>DESCRIÇÃO</th>
-        <th style="width:38pt">UND</th>
-        <th style="width:34pt">QNTD</th>
+        <th style="width:36pt">UND</th>
+        <th style="width:32pt">QNTD</th>
       </tr>
     </thead>
     <tbody>${linhas}</tbody>
   </table>
 
-  <!-- OBSERVAÇÃO -->
-  <div class="obs-row">
-    <span class="obs-label-cell">OBSERVAÇÃO:</span>
+  <div class="obs-wrap">
+    <div class="obs-lbl">OBSERVAÇÃO:</div>
+    <div class="obs-box">${d.obs||''}</div>
   </div>
-  <div class="obs-box">${d.obs||''}</div>
 
 </div>
 
-<!-- RODAPÉ -->
 <div class="rodape">
-  ${sigBlock('MINISTÉRIO LOCAL', d.sigMin, d.nomeMin, 'dataMin')}
-  ${sigBlock('APROVAÇÃO TÉCNICA', d.sigTec, d.nomeTec, 'dataTec')}
-  ${sigBlock('APROVAÇÃO ADM', d.sigMan, d.nomeMan, 'dataMan')}
+  ${sig('MINISTÉRIO LOCAL', d.sigMin, d.nomeMin, 'dataMin')}
+  ${sig('APROVAÇÃO TÉCNICA', d.sigTec, d.nomeTec, 'dataTec')}
+  ${sig('APROVAÇÃO ADM', d.sigMan, d.nomeMan, 'dataMan')}
 </div>
 
-<script>window.onload = () => setTimeout(() => window.print(), 400);<\/script>
-</body>
-</html>`;
+<script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script>
+</body></html>`;
 
   win.document.write(html);
   win.document.close();
-  showToast('📄 PDF gerado!');
+  showToast('📄 Abrindo para impressão...');
 }
 
 // ===== INIT FIREBASE =====
