@@ -2251,10 +2251,22 @@ function gerarPDFReq(idx) {
   const doc = new jsPDF('p','mm','a4');
 
   const PRETO = [0,0,0];
-  const AZUL  = [26,70,180]; // caneta bic
 
-  // ── Dimensões ──
-  const ML=14, MT=10, PW=182, PH=255; // borda principal (não inclui rodapé)
+  // ── Layout calculado para caber perfeitamente em A4 ──
+  const ML=14, MT=10, PW=182;
+  // Cabeçalho
+  const hY=MT+3, hH=18;
+  // Seção igrejas
+  const secY=hY+hH+4, secH=36;
+  // Tabela
+  const tblY=secY+secH+2, hdrH=8, rowH=6.0;
+  // Observação
+  const obsY=tblY+hdrH+25*rowH; // 231mm
+  const obsH=22;
+  // Borda principal
+  const PH=obsY+obsH-MT; // 243mm
+  // Rodapé (fora da borda)
+  const rodY=MT+PH+8; // 261mm
 
   // ══════════════════════════════════
   // BORDA EXTERNA
@@ -2265,7 +2277,6 @@ function gerarPDFReq(idx) {
   // ══════════════════════════════════
   // CABEÇALHO — borda interna
   // ══════════════════════════════════
-  const hY=MT+3, hH=18;
   doc.setLineWidth(0.5);
   doc.rect(ML+3, hY, PW-6, hH);
   doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...PRETO);
@@ -2274,191 +2285,154 @@ function gerarPDFReq(idx) {
   doc.text('REQUISIÇÃO DE COMPRAS - ADMINISTRAÇÃO VINHEDO', ML+PW/2, hY+14.5, {align:'center'});
 
   // ══════════════════════════════════
-  // SEÇÃO — sem borda, apenas conteúdo
+  // IGREJAS — col1 (sem borda lateral)
   // ══════════════════════════════════
-  const secY = hY+hH+5; // espaço após cabeçalho
-  const secH = 38;
+  const col1W=72, col2W=46, col3X=ML+col1W+col2W;
+  const col3W=PW-col1W-col2W, col3CX=col3X+col3W/2;
 
-  // COL1 — Igrejas
-  const col1W = 72;
-  const igrejas = ['NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA',
-                   'RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'];
-  const minSp = secH / igrejas.length;
-  igrejas.forEach((m,i) => {
-    const my = secY + minSp*i + minSp*0.7;
-    const chk = (d.ministerios||[]).includes(m);
+  const igrejas=['NOVA VINHEDO','JARDIM BELA VISTA','VILA PLANALTO','PARQUE IOLANDA',
+                 'RESIDENCIAL VIDA NOVA I','CHÁCARA LÍRIO DOS CAMPOS','JARDIM MIRIAM'];
+  const minSp=secH/igrejas.length;
+  igrejas.forEach((m,i)=>{
+    const my=secY+minSp*i+minSp*0.7;
+    const chk=(d.ministerios||[]).includes(m);
     doc.setDrawColor(...PRETO); doc.setLineWidth(0.4);
-    doc.rect(ML+2, my-3.2, 4.5, 4.5); // checkbox maior
-    if (chk) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...PRETO);
-      doc.text('X', ML+3.3, my+0.8);
-    }
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...PRETO);
-    doc.text(m, ML+9, my+0.5);
+    doc.rect(ML+2,my-3.2,4.5,4.5);
+    if(chk){doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...PRETO);doc.text('X',ML+3.4,my+0.8);}
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...PRETO);
+    doc.text(m,ML+9,my+0.5);
   });
 
-  // COL2 — Categorias
-  const col2X = ML+col1W, col2W=46;
-  const cats = ['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'];
-  const catSp = secH / cats.length;
-  cats.forEach((cat,i) => {
-    const cy = secY + catSp*i + catSp*0.7;
-    const chk = (d.categorias||[]).includes(cat);
-    doc.setDrawColor(...PRETO); doc.setLineWidth(0.4);
-    doc.rect(col2X+2, cy-3.2, 4.5, 4.5);
-    if (chk) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...PRETO);
-      doc.text('X', col2X+3.3, cy+0.8);
-    }
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...PRETO);
-    doc.text(cat, col2X+9, cy+0.5);
+  // ══════════════════════════════════
+  // CATEGORIAS — col2
+  // ══════════════════════════════════
+  const col2X=ML+col1W;
+  const cats=['CONSTRUÇÃO','REFORMA','MANUTENÇÃO','OUTROS'];
+  const catSp=secH/cats.length;
+  cats.forEach((cat,i)=>{
+    const cy=secY+catSp*i+catSp*0.7;
+    const chk=(d.categorias||[]).includes(cat);
+    doc.setDrawColor(...PRETO);doc.setLineWidth(0.4);
+    doc.rect(col2X+2,cy-3.2,4.5,4.5);
+    if(chk){doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...PRETO);doc.text('X',col2X+3.4,cy+0.8);}
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...PRETO);
+    doc.text(cat,col2X+9,cy+0.5);
   });
 
-  // COL3 — Data + Solicitante
-  const col3X = col2X+col2W;
-  const col3W = PW-col1W-col2W;
-  const col3CX = col3X+col3W/2;
-
-  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...PRETO);
-  doc.text('DATA DA SOLICITAÇÃO', col3CX, secY+5, {align:'center'});
-
-  // Linha da data
-  doc.setDrawColor(...PRETO); doc.setLineWidth(0.4);
-  doc.line(col3X+2, secY+14, ML+PW-3, secY+14);
-  if (d.dataSolicitacao) {
-    const [y,m,dd] = d.dataSolicitacao.split('-');
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PRETO);
-    doc.text(`${dd} / ${m} / ${y}`, col3CX, secY+13, {align:'center'});
-  } else {
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...PRETO);
-    doc.text('_______ / _______ / _______', col3CX, secY+13, {align:'center'});
+  // ══════════════════════════════════
+  // DATA + SOLICITANTE — col3
+  // ══════════════════════════════════
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...PRETO);
+  doc.text('DATA DA SOLICITAÇÃO',col3CX,secY+5,{align:'center'});
+  // Linha data
+  doc.setDrawColor(...PRETO);doc.setLineWidth(0.4);
+  doc.line(col3X+2,secY+14,ML+PW-3,secY+14);
+  if(d.dataSolicitacao){
+    const [y,m,dd]=d.dataSolicitacao.split('-');
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...PRETO);
+    doc.text(`${dd} / ${m} / ${y}`,col3CX,secY+13,{align:'center'});
   }
-
-  // Linha do nome
+  // Linha nome
   doc.setLineWidth(0.4);
-  doc.line(col3X+2, secY+25, ML+PW-3, secY+25);
-  if (d.nomeSolicitante) {
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...PRETO);
-    doc.text(d.nomeSolicitante, col3CX, secY+24, {align:'center'});
+  doc.line(col3X+2,secY+25,ML+PW-3,secY+25);
+  if(d.nomeSolicitante){
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...PRETO);
+    doc.text(d.nomeSolicitante,col3CX,secY+24,{align:'center'});
   }
-  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...PRETO);
-  doc.text('NOME DO SOLICITANTE', col3CX, secY+30, {align:'center'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(8);
-  doc.text('(POR EXTENSO)', col3CX, secY+35, {align:'center'});
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...PRETO);
+  doc.text('NOME DO SOLICITANTE',col3CX,secY+30,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(8);
+  doc.text('(POR EXTENSO)',col3CX,secY+35,{align:'center'});
 
   // ══════════════════════════════════
   // TABELA — cabeçalho com borda dupla
   // ══════════════════════════════════
-  const tblY = secY+secH+2;
   const cNum=16, cDesc=122, cUnd=24, cQtd=PW-cNum-cDesc-cUnd;
-  const hdrH=8.5, rowH=6.5;
 
-  // Borda externa do cabeçalho (grossa)
-  doc.setDrawColor(...PRETO); doc.setLineWidth(0.7);
-  doc.rect(ML, tblY, PW, hdrH);
-  // Borda interna do cabeçalho (fina, recuada)
+  // Borda externa grossa
+  doc.setDrawColor(...PRETO);doc.setLineWidth(0.7);
+  doc.rect(ML,tblY,PW,hdrH);
+  // Borda interna fina
   doc.setLineWidth(0.25);
-  doc.rect(ML+0.8, tblY+0.8, PW-1.6, hdrH-1.6);
-
-  // Divisores verticais do cabeçalho
+  doc.rect(ML+0.8,tblY+0.8,PW-1.6,hdrH-1.6);
+  // Divisores verticais
   doc.setLineWidth(0.5);
-  doc.line(ML+cNum,          tblY, ML+cNum,          tblY+hdrH);
-  doc.line(ML+cNum+cDesc,    tblY, ML+cNum+cDesc,    tblY+hdrH);
-  doc.line(ML+cNum+cDesc+cUnd, tblY, ML+cNum+cDesc+cUnd, tblY+hdrH);
+  doc.line(ML+cNum,         tblY,ML+cNum,         tblY+hdrH);
+  doc.line(ML+cNum+cDesc,   tblY,ML+cNum+cDesc,   tblY+hdrH);
+  doc.line(ML+cNum+cDesc+cUnd,tblY,ML+cNum+cDesc+cUnd,tblY+hdrH);
+  // Textos
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...PRETO);
+  doc.text('ITEM',    ML+cNum/2,              tblY+hdrH/2+3,{align:'center'});
+  doc.text('DESCRIÇÃO',ML+cNum+cDesc/2,       tblY+hdrH/2+3,{align:'center'});
+  doc.text('UND',     ML+cNum+cDesc+cUnd/2,   tblY+hdrH/2+3,{align:'center'});
+  doc.text('QNTD',    ML+cNum+cDesc+cUnd+cQtd/2,tblY+hdrH/2+3,{align:'center'});
 
-  // Textos cabeçalho
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...PRETO);
-  doc.text('ITEM',     ML+cNum/2,                       tblY+hdrH/2+3, {align:'center'});
-  doc.text('DESCRIÇÃO',ML+cNum+cDesc/2,                 tblY+hdrH/2+3, {align:'center'});
-  doc.text('UND',      ML+cNum+cDesc+cUnd/2,            tblY+hdrH/2+3, {align:'center'});
-  doc.text('QNTD',     ML+cNum+cDesc+cUnd+cQtd/2,       tblY+hdrH/2+3, {align:'center'});
-
-  // 25 linhas de itens
-  for (let i=0; i<25; i++) {
-    const ry = tblY+hdrH+i*rowH;
-    const it = (d.itens||[])[i];
-    // Bordas das células
-    doc.setDrawColor(120,120,120); doc.setLineWidth(0.35);
-    doc.rect(ML,                    ry, cNum,  rowH);
-    doc.rect(ML+cNum,               ry, cDesc, rowH);
-    doc.rect(ML+cNum+cDesc,         ry, cUnd,  rowH);
-    doc.rect(ML+cNum+cDesc+cUnd,    ry, cQtd,  rowH);
-    // Número
-    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(80,80,80);
-    doc.text(String(i+1), ML+cNum/2, ry+rowH/2+3.5, {align:'center'});
-    // Dados
-    if (it && it.desc) {
-      doc.setTextColor(...PRETO); doc.setFontSize(10);
-      doc.text(doc.splitTextToSize(it.desc, cDesc-3)[0], ML+cNum+2, ry+rowH/2+3.5);
-      if (it.und) doc.text(it.und, ML+cNum+cDesc+cUnd/2, ry+rowH/2+3.5, {align:'center'});
-      if (it.qtd) doc.text(String(it.qtd), ML+cNum+cDesc+cUnd+cQtd/2, ry+rowH/2+3.5, {align:'center'});
+  // ══════════════════════════════════
+  // 25 LINHAS DE ITENS
+  // ══════════════════════════════════
+  for(let i=0;i<25;i++){
+    const ry=tblY+hdrH+i*rowH;
+    const it=(d.itens||[])[i];
+    doc.setDrawColor(120,120,120);doc.setLineWidth(0.35);
+    doc.rect(ML,             ry,cNum, rowH);
+    doc.rect(ML+cNum,        ry,cDesc,rowH);
+    doc.rect(ML+cNum+cDesc,  ry,cUnd, rowH);
+    doc.rect(ML+cNum+cDesc+cUnd,ry,cQtd,rowH);
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(80,80,80);
+    doc.text(String(i+1),ML+cNum/2,ry+rowH/2+3.5,{align:'center'});
+    if(it&&it.desc){
+      doc.setTextColor(...PRETO);doc.setFontSize(10);
+      doc.text(doc.splitTextToSize(it.desc,cDesc-3)[0],ML+cNum+2,ry+rowH/2+3.5);
+      if(it.und)doc.text(it.und,ML+cNum+cDesc+cUnd/2,ry+rowH/2+3.5,{align:'center'});
+      if(it.qtd)doc.text(String(it.qtd),ML+cNum+cDesc+cUnd+cQtd/2,ry+rowH/2+3.5,{align:'center'});
     }
   }
 
   // ══════════════════════════════════
   // OBSERVAÇÃO — dentro da borda externa
   // ══════════════════════════════════
-  const obsY = tblY+hdrH+25*rowH;
-  const obsH = MT+PH - obsY; // até o fim da borda principal
-  // Label OBSERVAÇÃO:
-  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...PRETO);
-  doc.text('OBSERVAÇÃO:', ML+2, obsY+5);
-  // Caixa interna
-  const obsBoxY = obsY+1, obsBoxH = obsH-2;
-  doc.setDrawColor(...PRETO); doc.setLineWidth(0.3);
-  // Só bordas laterais e inferior da caixa interna (topo já é a linha da tabela)
-  doc.line(ML+1,    obsBoxY+6, ML+1,    obsBoxY+obsBoxH);
-  doc.line(ML+PW-1, obsBoxY+6, ML+PW-1, obsBoxY+obsBoxH);
-  doc.line(ML+1,    obsBoxY+obsBoxH, ML+PW-1, obsBoxY+obsBoxH);
-  if (d.obs) {
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...PRETO);
-    doc.text(doc.splitTextToSize(d.obs, PW-6), ML+3, obsY+11);
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...PRETO);
+  doc.text('OBSERVAÇÃO:',ML+2,obsY+5);
+  // Caixa interna (sem linha superior — já existe a da tabela)
+  doc.setDrawColor(...PRETO);doc.setLineWidth(0.3);
+  doc.line(ML+1,    obsY+7,  ML+1,    obsY+obsH-1);   // esquerda
+  doc.line(ML+PW-1, obsY+7,  ML+PW-1, obsY+obsH-1);   // direita
+  doc.line(ML+1,    obsY+obsH-1, ML+PW-1, obsY+obsH-1); // inferior
+  if(d.obs){
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...PRETO);
+    doc.text(doc.splitTextToSize(d.obs,PW-6),ML+3,obsY+12);
   }
 
   // ══════════════════════════════════
-  // RODAPÉ — FORA da borda principal
-  // Igual ao original: linhas curtas + label + DATA
+  // RODAPÉ — FORA da borda, linhas curtas
   // ══════════════════════════════════
-  const rodY = MT+PH+8;
-  const colW = PW/3;
-
-  const sigs = [
-    {l:'MINISTÉRIO LOCAL',  img:d.sigMin, n:d.nomeMin, df:'dataMin'},
-    {l:'APROVAÇÃO TÉCNICA', img:d.sigTec, n:d.nomeTec, df:'dataTec'},
-    {l:'APROVAÇÃO ADM',     img:d.sigMan, n:d.nomeMan, df:'dataMan'},
+  const colW=PW/3;
+  const sigs=[
+    {l:'MINISTÉRIO LOCAL',  img:d.sigMin,n:d.nomeMin,df:'dataMin'},
+    {l:'APROVAÇÃO TÉCNICA', img:d.sigTec,n:d.nomeTec,df:'dataTec'},
+    {l:'APROVAÇÃO ADM',     img:d.sigMan,n:d.nomeMan,df:'dataMan'},
   ];
 
-  sigs.forEach((sg,i) => {
-    const sx  = ML + i*colW;
-    const ccx = sx + colW/2;
-    const linhaY = rodY + 10;
-
+  sigs.forEach((sg,i)=>{
+    const sx=ML+i*colW, ccx=sx+colW/2;
+    const linhaY=rodY+10;
     // Imagem acima da linha
-    if (sg.img) {
-      try { doc.addImage(sg.img,'JPEG', sx+4, linhaY-12, colW-8, 11); } catch(e){}
-    }
-
-    // Linha de assinatura curta
-    doc.setDrawColor(...PRETO); doc.setLineWidth(0.5);
-    doc.line(sx+4, linhaY, sx+colW-4, linhaY);
-
+    if(sg.img){try{doc.addImage(sg.img,'JPEG',sx+5,linhaY-12,colW-10,11);}catch(e){}}
+    // Linha curta de assinatura
+    doc.setDrawColor(...PRETO);doc.setLineWidth(0.5);
+    doc.line(sx+4,linhaY,sx+colW-4,linhaY);
     // Nome
-    if (sg.n) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...PRETO);
-      doc.text(sg.n, ccx, linhaY+4, {align:'center'});
-    }
-
+    if(sg.n){doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...PRETO);doc.text(sg.n,ccx,linhaY+4,{align:'center'});}
     // Label
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...PRETO);
-    doc.text(sg.l, ccx, linhaY+5+5, {align:'center'});
-
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...PRETO);
+    doc.text(sg.l,ccx,linhaY+(sg.n?9:5),{align:'center'});
     // DATA
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...PRETO);
-    const dataVal = sg.df && d[sg.df] ? 'DATA  ' + fD(d[sg.df]) : 'DATA ______/______/_________';
-    doc.text(dataVal, ccx, linhaY+14, {align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...PRETO);
+    const dv=sg.df&&d[sg.df]?'DATA  '+fD(d[sg.df]):'DATA ______/______/_________';
+    doc.text(dv,ccx,linhaY+(sg.n?14:10),{align:'center'});
   });
 
-  doc.save('Req_CCB_' + fN(d.num) + '.pdf');
+  doc.save('Req_CCB_'+fN(d.num)+'.pdf');
   showToast('📄 PDF gerado!');
 }
 
