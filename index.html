@@ -2344,13 +2344,29 @@ function gerarPDFReq(idx) {
   const cNum=14, cDesc=126, cUnd=24, cQtd=PW-cNum-cDesc-cUnd; // ~18
   const hdrH=8, rowH=6.0;
 
-  // Cabeçalho da tabela
+  // Cabeçalho da tabela — borda dupla (externa + interna)
+  // Borda externa completa
+  doc.setDrawColor(...PRETO); doc.setLineWidth(0.5);
+  doc.rect(ML, tblY, PW, hdrH);
+  // Borda interna (recuada 1mm)
+  doc.setLineWidth(0.3);
+  doc.rect(ML+1, tblY+1, PW-2, hdrH-2);
+
+  // Divisores internos das colunas (apenas a borda interna)
+  let divX = ML;
   const tblCols=[{l:'ITEM',w:cNum},{l:'DESCRIÇÃO',w:cDesc},{l:'UND',w:cUnd},{l:'QNTD',w:cQtd}];
+  tblCols.forEach((col,i) => {
+    divX += col.w;
+    if (i < tblCols.length-1) {
+      doc.setLineWidth(0.4);
+      doc.line(divX, tblY, divX, tblY+hdrH);
+    }
+  });
+
+  // Textos dos cabeçalhos
   let cx=ML;
   doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...PRETO);
   tblCols.forEach(col => {
-    doc.setDrawColor(...PRETO); doc.setLineWidth(0.4);
-    doc.rect(cx, tblY, col.w, hdrH);
     doc.text(col.l, cx+col.w/2, tblY+hdrH/2+2.8, {align:'center'});
     cx += col.w;
   });
