@@ -1561,14 +1561,17 @@ function onDescInput(input, row) {
     return;
   }
 
-  drop.innerHTML = results.map((it, idx) => `
-    <div class="autocomplete-item" id="acitem_${row}_${idx}"
-      onmousedown="selecionarItem(${row}, '${escJs(it.desc)}', '${escJs(it.und)}')"
+  drop.innerHTML = results.map((it, idx) => {
+    const descSafe = it.desc.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    const undSafe  = it.und.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    return `<div class="autocomplete-item" id="acitem_${row}_${idx}"
+      data-desc="${descSafe}" data-und="${undSafe}"
+      onmousedown="selecionarItemData(this, ${row})"
       onmouseover="setActiveIdx(${row}, ${idx}, ${results.length})">
       <span class="item-nome">${highlight(it.desc, val)}</span>
       <span class="item-und">${it.und}</span>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   activeDropdown = row;
   drop.classList.add('show');
@@ -1620,6 +1623,12 @@ function onDescBlur(row) {
     const drop = document.getElementById(`drop_${row}`);
     if (drop) drop.classList.remove('show');
   }, 150);
+}
+
+function selecionarItemData(el, row) {
+  const desc = el.getAttribute('data-desc');
+  const und  = el.getAttribute('data-und');
+  selecionarItem(row, desc, und);
 }
 
 function selecionarItem(row, desc, und) {
@@ -2337,29 +2346,29 @@ function gerarPDFReq(idx) {
   // Proporções exatas do original:
   // ITEM ~13mm | DESCRIÇÃO ~120mm | UND ~26mm | QNTD ~25mm
   const cN=13, cD=120, cU=26, cQ=PW-cN-cD-cU; // ~25mm
-  const hH=8.5, rH=6.2;
+  const tHH=8.5, rH=6.2;
 
   // Cabeçalho: borda externa grossa
   doc.setDrawColor(...K); doc.setLineWidth(0.8);
-  doc.rect(ML, tY, PW, hH);
+  doc.rect(ML, tY, PW, tHH);
   // Cabeçalho: borda interna fina (recuada 1mm = borda dupla visível)
   doc.setLineWidth(0.3);
-  doc.rect(ML+1, tY+1, PW-2, hH-2);
+  doc.rect(ML+1, tY+1, PW-2, tHH-2);
   // Divisores verticais (atravessam as duas bordas)
   doc.setLineWidth(0.6);
-  doc.line(ML+cN,         tY, ML+cN,         tY+hH);
-  doc.line(ML+cN+cD,      tY, ML+cN+cD,      tY+hH);
-  doc.line(ML+cN+cD+cU,   tY, ML+cN+cD+cU,   tY+hH);
+  doc.line(ML+cN,         tY, ML+cN,         tY+tHH);
+  doc.line(ML+cN+cD,      tY, ML+cN+cD,      tY+tHH);
+  doc.line(ML+cN+cD+cU,   tY, ML+cN+cD+cU,   tY+tHH);
   // Textos
   doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...K);
-  doc.text('ITEM',     ML+cN/2,              tY+hH/2+3.3, {align:'center'});
-  doc.text('DESCRIÇÃO',ML+cN+cD/2,           tY+hH/2+3.3, {align:'center'});
-  doc.text('UND',      ML+cN+cD+cU/2,        tY+hH/2+3.3, {align:'center'});
-  doc.text('QNTD',     ML+cN+cD+cU+cQ/2,     tY+hH/2+3.3, {align:'center'});
+  doc.text('ITEM',     ML+cN/2,              tY+tHH/2+3.3, {align:'center'});
+  doc.text('DESCRIÇÃO',ML+cN+cD/2,           tY+tHH/2+3.3, {align:'center'});
+  doc.text('UND',      ML+cN+cD+cU/2,        tY+tHH/2+3.3, {align:'center'});
+  doc.text('QNTD',     ML+cN+cD+cU+cQ/2,     tY+tHH/2+3.3, {align:'center'});
 
   // 25 linhas — bordas finas, números cinza, dados pretos
   for(let i=0;i<25;i++){
-    const ry=tY+hH+i*rH;
+    const ry=tY+tHH+i*rH;
     const it=(d.itens||[])[i];
     doc.setDrawColor(...K); doc.setLineWidth(0.3);
     doc.rect(ML,           ry, cN, rH);
@@ -2381,7 +2390,7 @@ function gerarPDFReq(idx) {
   // 5. OBSERVAÇÃO
   // No original: label "OBSERVAÇÃO:" numa célula com borda pequena própria
   // + abaixo uma caixa aberta (parte da borda externa)
-  const obsY = tY+hH+25*rH;
+  const obsY = tY+tHH+25*rH;
   const obsLabelH=6;
   // Label com borda — pequena célula
   doc.setDrawColor(...K); doc.setLineWidth(0.3);
