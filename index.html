@@ -2314,10 +2314,10 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#000;background:
 .hdr{padding:4pt 5pt;}
 .hdr-in{border:1.2px solid #000;text-align:center;padding:6pt 4pt 5pt;}
 .hdr-t{font-size:15pt;font-weight:900;letter-spacing:.3pt;}
-.hdr-s{font-size:8pt;letter-spacing:.8pt;margin-top:3pt;color:#444;}
+.hdr-s{font-size:9pt;letter-spacing:.5pt;margin-top:4pt;color:#000;font-weight:400;}
 
 /* SEÇÃO IGREJAS */
-.sec{display:flex;padding:5pt 4pt 4pt;border-top:1px solid #000;gap:0;align-items:flex-start;}
+.sec{display:flex;padding:5pt 4pt 4pt;border-top:none;gap:0;align-items:flex-start;}
 .col-ig{flex:0 0 37%;}
 .col-ct{flex:0 0 27%;}
 .col-sl{flex:1;text-align:center;padding-left:4pt;}
@@ -2353,11 +2353,12 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#000;background:
        font-size:8.5pt;vertical-align:middle;}
 
 /* OBSERVAÇÃO */
-.obs-wrap{border-top:0.5pt solid #000;padding:3pt 4pt 0;}
-.obs-lbl{display:inline-block;border:0.5pt solid #000;padding:1pt 5pt;
-         font-size:8pt;font-weight:700;margin-bottom:3pt;}
-.obs-box{border:0.8pt solid #000;min-height:30pt;padding:3pt 4pt;
-         font-size:8.5pt;margin-bottom:0;}
+.obs-wrap{border-top:0.5pt solid #000;padding:0;}
+.obs-lbl-row{display:flex;align-items:center;padding:2pt 4pt;gap:0;}
+.obs-lbl{display:inline-block;border:0.8pt solid #000;padding:1pt 6pt;
+         font-size:8pt;font-weight:700;white-space:nowrap;}
+.obs-box{border:0.8pt solid #000;border-top:none;min-height:30pt;
+         padding:3pt 4pt;font-size:8.5pt;}
 
 /* RODAPÉ */
 .rodape{display:flex;margin-top:14pt;}
@@ -2406,7 +2407,9 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:9pt;color:#000;background:
   </table>
 
   <div class="obs-wrap">
-    <div class="obs-lbl">OBSERVAÇÃO:</div>
+    <div class="obs-lbl-row">
+      <div class="obs-lbl">OBSERVAÇÃO:</div>
+    </div>
     <div class="obs-box">${d.obs||''}</div>
   </div>
 
