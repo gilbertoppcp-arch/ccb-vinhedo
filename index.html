@@ -2436,16 +2436,16 @@ function gerarPDFReq(idx) {
       doc.text(sg.n, ccx, nomeY, {align:'center'});
     }
 
-    // Label (MINISTÉRIO LOCAL etc)
+    // Label logo abaixo da linha de assinatura
     doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...PRETO);
-    doc.text(sg.l, ccx, labelY, {align:'center'});
+    doc.text(sg.l, ccx, linhaY + 5, {align:'center'});
 
     // DATA — automática se assinado
     doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...PRETO);
     const dataVal = sg.dataField && d[sg.dataField]
       ? 'DATA  ' + fD(d[sg.dataField])
       : 'DATA ______/______/_________';
-    doc.text(dataVal, ccx, dataY, {align:'center'});
+    doc.text(dataVal, ccx, linhaY + 10, {align:'center'});
   });
   doc.save('Req_CCB_' + fN(d.num) + '.pdf');
   showToast('📄 PDF gerado!');
